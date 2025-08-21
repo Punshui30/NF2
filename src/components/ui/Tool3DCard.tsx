@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { DivideIcon as LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface Tool3DCardProps {
   title: string;
@@ -22,19 +22,19 @@ export const Tool3DCard: React.FC<Tool3DCardProps> = ({
   glowColor = 'blue'
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  
+
   const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  
+  the y = useMotionValue(0);
+
   const mouseXSpring = useSpring(x);
   const mouseYSpring = useSpring(y);
-  
+
   const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["17.5deg", "-17.5deg"]);
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-17.5deg", "17.5deg"]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (disabled) return;
-    
+
     const rect = e.currentTarget.getBoundingClientRect();
     const width = rect.width;
     const height = rect.height;
@@ -86,7 +86,7 @@ export const Tool3DCard: React.FC<Tool3DCardProps> = ({
       whileTap={disabled ? {} : { scale: 0.95 }}
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ 
+      transition={{
         type: "spring",
         stiffness: 300,
         damping: 30,
@@ -106,20 +106,20 @@ export const Tool3DCard: React.FC<Tool3DCardProps> = ({
           transformStyle: "preserve-3d",
         }}
         animate={{
-          boxShadow: isHovered 
+          boxShadow: isHovered
             ? `0 25px 50px -12px ${glowColors[glowColor as keyof typeof glowColors]}, 0 0 0 1px rgba(255,255,255,0.1)`
             : "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
         }}
         transition={{ duration: 0.3 }}
       >
         {/* Animated background gradient */}
-        <motion.div 
+        <motion.div
           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
           style={{
             background: `radial-gradient(circle at 50% 50%, ${glowColors[glowColor as keyof typeof glowColors]}, transparent 70%)`
           }}
         />
-        
+
         {/* Floating particles */}
         {isHovered && (
           <div className="absolute inset-0 overflow-hidden">
@@ -132,7 +132,7 @@ export const Tool3DCard: React.FC<Tool3DCardProps> = ({
                   top: `${20 + Math.random() * 60}%`,
                 }}
                 initial={{ opacity: 0, scale: 0 }}
-                animate={{ 
+                animate={{
                   opacity: [0, 1, 0],
                   scale: [0, 1, 0],
                   y: [-20, -40, -60]
@@ -147,16 +147,16 @@ export const Tool3DCard: React.FC<Tool3DCardProps> = ({
             ))}
           </div>
         )}
-        
+
         {/* Content */}
-        <div 
+        <div
           className="relative z-10 h-full flex flex-col p-6"
           style={{
             transform: "translateZ(50px)",
           }}
         >
           {/* Icon container with 3D effect */}
-          <motion.div 
+          <motion.div
             className="flex items-center mb-6"
             style={{
               transform: "translateZ(25px)",
@@ -177,9 +177,9 @@ export const Tool3DCard: React.FC<Tool3DCardProps> = ({
               <Icon className="w-8 h-8 text-white" />
             </div>
           </motion.div>
-          
+
           {/* Title */}
-          <motion.h3 
+          <motion.h3
             className="text-2xl font-bold text-white mb-3 group-hover:text-blue-200 transition-colors duration-300"
             style={{
               transform: "translateZ(20px)",
@@ -187,9 +187,9 @@ export const Tool3DCard: React.FC<Tool3DCardProps> = ({
           >
             {title}
           </motion.h3>
-          
+
           {/* Description */}
-          <motion.p 
+          <motion.p
             className="text-gray-300 text-sm leading-relaxed flex-1"
             style={{
               transform: "translateZ(15px)",
@@ -197,9 +197,9 @@ export const Tool3DCard: React.FC<Tool3DCardProps> = ({
           >
             {description}
           </motion.p>
-          
+
           {/* Hover indicator */}
-          <motion.div 
+          <motion.div
             className="mt-6 flex items-center text-blue-300 opacity-0 group-hover:opacity-100 transition-all duration-300"
             style={{
               transform: "translateZ(10px)",
@@ -210,7 +210,7 @@ export const Tool3DCard: React.FC<Tool3DCardProps> = ({
             transition={{ duration: 1.5, repeat: isHovered ? Infinity : 0 }}
           >
             <span className="text-sm font-medium">Explore</span>
-            <motion.span 
+            <motion.span
               className="ml-2 text-lg"
               animate={{
                 rotate: isHovered ? 360 : 0,
@@ -221,14 +221,14 @@ export const Tool3DCard: React.FC<Tool3DCardProps> = ({
             </motion.span>
           </motion.div>
         </div>
-        
+
         {/* Edge glow effect */}
         <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
           <div className="absolute inset-0 rounded-2xl border-2 border-transparent bg-gradient-to-r from-blue-500/50 via-purple-500/50 to-pink-500/50 bg-clip-border" />
           <div className="absolute inset-0.5 rounded-2xl bg-gradient-to-br from-gray-900/90 to-gray-800/90" />
         </div>
       </motion.div>
-      
+
       {/* 3D shadow */}
       <motion.div
         className="absolute inset-0 rounded-2xl bg-black/20 blur-xl"
