@@ -16,10 +16,7 @@ export type DecisionAnalysisResponse = {
 
 const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };
 
-/**
- * Calls the Netlify function at /api/analyze.
- * netlify.toml redirects /api/* -> /.netlify/functions/:splat
- */
+/** Call Netlify function /api/analyze (see netlify.toml redirects). */
 export async function analyzeDecision(
   decision: string,
   options: string[],
@@ -50,10 +47,10 @@ export async function analyzeDecision(
   };
 }
 
-/** Back-compat export for files importing { analyze } */
+/** Back-compat named export */
 export const analyze = analyzeDecision;
 
-/** Object export for files importing { api } */
+/** Object export for pages that import { api } */
 export const api = { analyzeDecision, analyze };
 
 export type { DecisionAnalysisResponse as DecisionResult };
