@@ -166,14 +166,14 @@ export const Tool3DCard: React.FC<Tool3DCardProps> = ({
             }}
             transition={{ duration: 2, repeat: isHovered ? Infinity : 0 }}
           >
-            <div className={`
+            <div className="
               p-4 rounded-xl backdrop-blur-md
               bg-gradient-to-br from-white/20 to-white/10
               border border-white/30
               shadow-lg
               group-hover:shadow-xl group-hover:scale-110
               transition-all duration-300
-            `}>
+            ">
               <Icon className="w-8 h-8 text-white" />
             </div>
           </motion.div>
@@ -197,51 +197,8 @@ export const Tool3DCard: React.FC<Tool3DCardProps> = ({
           >
             {description}
           </motion.p>
-
-          {/* Hover indicator */}
-          <motion.div
-            className="mt-6 flex items-center text-blue-300 opacity-0 group-hover:opacity-100 transition-all duration-300"
-            style={{
-              transform: "translateZ(10px)",
-            }}
-            animate={{
-              x: isHovered ? [0, 5, 0] : 0,
-            }}
-            transition={{ duration: 1.5, repeat: isHovered ? Infinity : 0 }}
-          >
-            <span className="text-sm font-medium">Explore</span>
-            <motion.span
-              className="ml-2 text-lg"
-              animate={{
-                rotate: isHovered ? 360 : 0,
-              }}
-              transition={{ duration: 2, repeat: isHovered ? Infinity : 0, ease: "linear" }}
-            >
-              →
-            </motion.span>
-          </motion.div>
-        </div>
-
-        {/* Edge glow effect */}
-        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-          <div className="absolute inset-0 rounded-2xl border-2 border-transparent bg-gradient-to-r from-blue-500/50 via-purple-500/50 to-pink-500/50 bg-clip-border" />
-          <div className="absolute inset-0.5 rounded-2xl bg-gradient-to-br from-gray-900/90 to-gray-800/90" />
         </div>
       </motion.div>
-
-      {/* 3D shadow */}
-      <motion.div
-        className="absolute inset-0 rounded-2xl bg-black/20 blur-xl"
-        style={{
-          transform: "translateZ(-50px) rotateX(90deg)",
-          transformOrigin: "bottom",
-        }}
-        animate={{
-          opacity: isHovered ? 0.4 : 0.2,
-          scale: isHovered ? 1.1 : 1,
-        }}
-        transition={{ duration: 0.3 }}
-      />
     </motion.div>
   );
 };
