@@ -2,10 +2,10 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider, useApp } from "./contexts/AppContext";
-import { EnhancedLandingPage } from "./pages/EnhancedLandingPage";
-import OnboardingChat from "./pages/OnboardingChat"; // <-- conversational onboarding
+import EnhancedLandingPage from "./pages/EnhancedLandingPage"; // ✅ default import
+import OnboardingChat from "./pages/OnboardingChat";           // ✅ default export
 import Dashboard from "./pages/Dashboard";
-import { DecisionCompassPage } from "./pages/DecisionCompassPage";
+import { DecisionCompassPage } from "./pages/DecisionCompassPage"; // named export
 
 const AppRoutes: React.FC = () => {
   const { state } = useApp();
