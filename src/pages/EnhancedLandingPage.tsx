@@ -16,7 +16,7 @@ export const EnhancedLandingPage: React.FC = () => {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   useEffect(() => {
-    const interval = setInterval(() => setMilestoneProgress(prev => (prev + 25) % 100), 5000);
+    const interval = setInterval(() => setMilestoneProgress((prev) => (prev + 25) % 100), 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -35,13 +35,17 @@ export const EnhancedLandingPage: React.FC = () => {
       intensity="high"
       milestoneProgress={milestoneProgress}
       onMilestoneComplete={() => {}}
-      enableSpatialAudio={false}  // audio off for now
+      enableSpatialAudio={false}  // sounds off for now
       audioMode="landing"
     >
       <div className="relative z-10">
         {/* Header */}
-        <motion.header className="absolute top-0 left-0 right-0 z-20 p-6"
-          initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.5 }}>
+        <motion.header
+          className="absolute top-0 left-0 right-0 z-20 p-6"
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.5 }}
+        >
           <div className="max-w-7xl mx-auto flex justify-between items-center">
             <motion.div className="flex items-center gap-3" whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 400 }}>
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl">
@@ -53,12 +57,10 @@ export const EnhancedLandingPage: React.FC = () => {
             </motion.div>
 
             <nav className="hidden md:flex items-center gap-8">
-              <motion.a href="#features" className="text-white/80 hover:text-white transition-colors text-lg font-medium"
-                whileHover={{ scale: 1.1, color: "#60a5fa" }}>
+              <motion.a href="#features" className="text-white/80 hover:text-white transition-colors text-lg font-medium" whileHover={{ scale: 1.1, color: "#60a5fa" }}>
                 Features
               </motion.a>
-              <motion.a href="#experience" className="text-white/80 hover:text-white transition-colors text-lg font-medium"
-                whileHover={{ scale: 1.1, color: "#a855f7" }}>
+              <motion.a href="#experience" className="text-white/80 hover:text-white transition-colors text-lg font-medium" whileHover={{ scale: 1.1, color: "#a855f7" }}>
                 Experience
               </motion.a>
               <CinematicButton variant="ghost" onClick={() => navigate("/login")}>Sign In</CinematicButton>
@@ -69,41 +71,70 @@ export const EnhancedLandingPage: React.FC = () => {
         {/* Hero */}
         <motion.section className="min-h-screen flex items-center justify-center px-6" style={{ y: heroY, opacity: heroOpacity }}>
           <div className="max-w-6xl mx-auto text-center">
-            <motion.div initial={{ opacity: 0, y: 100, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 1.2, delay: 0.8, type: "spring", stiffness: 100 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 100, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 1.2, delay: 0.8, type: "spring", stiffness: 100 }}
+            >
               <div className="mb-8">
                 <motion.h1 className="text-6xl md:text-8xl font-light text-white mb-4 leading-tight tracking-wide">
                   Navigate Your
                 </motion.h1>
-                <motion.div className="text-6xl md:text-8xl font-extralight leading-tight tracking-wider"
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 1 }}>
+                <motion.div
+                  className="text-6xl md:text-8xl font-extralight leading-tight tracking-wider"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.5, duration: 1 }}
+                >
                   <span className="bg-gradient-to-r from-blue-300 via-purple-400 to-pink-300 bg-clip-text text-transparent">True North</span>
                 </motion.div>
               </div>
 
-              <motion.p className="text-xl md:text-2xl text-gray-300 mb-16 max-w-4xl mx-auto leading-relaxed font-light tracking-wide"
-                initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2, duration: 0.8 }}>
+              <motion.p
+                className="text-xl md:text-2xl text-gray-300 mb-16 max-w-4xl mx-auto leading-relaxed font-light tracking-wide"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 2, duration: 0.8 }}
+              >
                 An intelligent life alignment platform that understands you deeply and guides your most important decisions with unprecedented clarity and wisdom.
               </motion.p>
 
-              <motion.div className="flex flex-col sm:flex-row gap-8 justify-center items-center"
-                initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.5, duration: 0.8 }}>
-                <CinematicButton size="xl" variant="aurora" onClick={() => navigate("/onboarding")}
-                  className="w-full sm:w-auto shadow-2xl px-12 py-4" icon={Compass}>
+              <motion.div
+                className="flex flex-col sm:flex-row gap-8 justify-center items-center"
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 2.5, duration: 0.8 }}
+              >
+                <CinematicButton
+                  size="xl"
+                  variant="aurora"
+                  onClick={() => navigate("/onboarding")}
+                  className="w-full sm:w-auto shadow-2xl px-12 py-4"
+                  icon={Compass}
+                >
                   Begin Journey
                 </CinematicButton>
-                <CinematicButton variant="secondary" size="xl" className="w-full sm:w-auto px-12 py-4" icon={Play}
-                  onClick={() => setShowDemo(true)}>
+
+                <CinematicButton
+                  variant="secondary"
+                  size="xl"
+                  className="w-full sm:w-auto px-12 py-4"
+                  icon={Play}
+                  onClick={() => setShowDemo(true)}
+                >
                   See How It Works
                 </CinematicButton>
               </motion.div>
             </motion.div>
 
             {/* Scroll indicator */}
-            <motion.div className="absolute bottom-12 left-1/2 -translate-x-1/2" initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }} transition={{ delay: 3, duration: 0.8 }}>
-              <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 2, repeat: Infinity }}
-                className="flex flex-col items-center text-white/60">
+            <motion.div
+              className="absolute bottom-12 left-1/2 -translate-x-1/2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 3, duration: 0.8 }}
+            >
+              <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 2, repeat: Infinity }} className="flex flex-col items-center text-white/60">
                 <span className="text-sm mb-2 font-medium">Discover More</span>
                 <ArrowDown className="w-6 h-6" />
               </motion.div>
@@ -114,8 +145,7 @@ export const EnhancedLandingPage: React.FC = () => {
         {/* Features */}
         <section id="features" className="py-32 px-6 relative">
           <div className="max-w-7xl mx-auto">
-            <motion.div className="text-center mb-20" initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} viewport={{ once: true }}>
+            <motion.div className="text-center mb-20" initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} viewport={{ once: true }}>
               <h2 className="text-5xl md:text-6xl font-light text-white mb-8 tracking-wide">
                 Intelligent <span className="bg-gradient-to-r from-blue-300 to-purple-400 bg-clip-text text-transparent font-extralight"> Guidance</span>
               </h2>
@@ -126,10 +156,14 @@ export const EnhancedLandingPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
               {features.map((feature, index) => (
-                <motion.div key={feature.title} initial={{ opacity: 0, y: 100, rotateX: -15 }}
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 100, rotateX: -15 }}
                   whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
                   transition={{ duration: 0.8, delay: index * 0.2, type: "spring", stiffness: 100 }}
-                  viewport={{ once: true }} className="perspective-1000">
+                  viewport={{ once: true }}
+                  className="perspective-1000"
+                >
                   <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 h-80 hover:bg-white/10 transition-all duration-500 transform-gpu hover:scale-105 hover:rotate-1">
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 flex items-center justify-center mb-8 shadow-2xl">
                       <feature.icon className="w-8 h-8 text-white" />
@@ -146,8 +180,7 @@ export const EnhancedLandingPage: React.FC = () => {
         {/* Experience */}
         <section id="experience" className="py-32 px-6">
           <div className="max-w-6xl mx-auto text-center">
-            <motion.div initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1 }} viewport={{ once: true }}>
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }} viewport={{ once: true }}>
               <h2 className="text-4xl md:text-5xl font-light text-white mb-8 tracking-wide">
                 Ready to discover your <span className="bg-gradient-to-r from-blue-300 to-purple-400 bg-clip-text text-transparent font-extralight"> true path?</span>
               </h2>
@@ -156,8 +189,7 @@ export const EnhancedLandingPage: React.FC = () => {
               </p>
 
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <CinematicButton size="xl" variant="aurora" onClick={() => navigate("/onboarding")}
-                  className="text-xl px-14 py-6 shadow-2xl" icon={Sparkles}>
+                <CinematicButton size="xl" variant="aurora" onClick={() => navigate("/onboarding")} className="text-xl px-14 py-6 shadow-2xl" icon={Sparkles}>
                   Begin Your Journey
                 </CinematicButton>
               </motion.div>
@@ -167,11 +199,18 @@ export const EnhancedLandingPage: React.FC = () => {
 
         {/* Demo Modal */}
         {showDemo && (
-          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => setShowDemo(false)}>
-            <motion.div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 max-w-2xl mx-4"
-              initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-              onClick={(e) => e.stopPropagation()}>
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={() => setShowDemo(false)}
+          >
+            <motion.div
+              className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 max-w-2xl mx-4"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <h3 className="text-3xl font-bold text-white mb-6">Experience NorthForm</h3>
               <p className="text-gray-300 mb-8 text-lg leading-relaxed">
                 Watch how NorthForm combines psychology, AI, and biometric data to provide unprecedented clarity for your life's most important decisions.
