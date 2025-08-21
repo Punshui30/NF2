@@ -158,9 +158,8 @@ export const CinematicButton: React.FC<CinematicButtonProps> = ({
         }}
         animate={{
           opacity: isPressed ? 0.6 : 0,
-          scale: isPressed ? 1.2 : 1,
         }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.2 }}
       />
     </motion.button>
   );
