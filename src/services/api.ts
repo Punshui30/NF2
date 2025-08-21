@@ -1,25 +1,51 @@
-export type AnalyzePayload = {
-  input: string;
-  context?: Record<string, any>;
-  profile?: Record<string, any>;
-  max_tokens?: number;
+// src/services/api.ts
+export type DecisionAnalysisRequest = {
+  decision: string;
+  options: string[];
+  userInputs?: Record<string, any>;
 };
 
-const API_BASE = "/api"; // netlify redirect -> functions
+export type DecisionAnalysisResponse = {
+  confidence: number;
+  recommendation: string;
+  reasoning: string[];
+  suggestedNextSteps: string[];
+  raw?: any;
+};
 
-async function callAnalyze(payload: AnalyzePayload) {
-  const res = await fetch(`${API_BASE}/analyze`, {
+const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };
+
+/**
+ * Calls the Netlify function at /api/analyze.
+ * Netlify redirect in netlify.toml routes /api/* -> /.netlify/functions/:splat
+ */
+async function analyzeDecision(
+  decision: string,
+  options: string[],
+  userInputs: Record<string, any> = {}
+): Promise<DecisionAnalysisResponse> {
+  const res = await fetch("/api/analyze", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ decision, options, userInputs }),
   });
+
   if (!res.ok) {
-    const msg = await res.text();
-    throw new Error(`Analyze failed: ${res.status} ${msg}`);
+    const text = await res.text().catch(() => "");
+    throw new Error(`analyze failed: ${res.status} ${text}`);
   }
-  return (await res.json()) as { text: string; model: string };
+
+  const data = await res.json();
+
+  return {
+    confidence: typeof data.confidence === "number" ? data.confidence : 60,
+    recommendation: typeof data.recommendation === "string" ? data.recommendation : "No recommendation available.",
+    reasoning: Array.isArray(data.reasoning) ? data.reasoning : [],
+    suggestedNextSteps: Array.isArray(data.suggestedNextSteps) ? data.suggestedNextSteps : [],
+    raw: data,
+  };
 }
 
-export async function analyze(input: string, ctx?: any, profile?: any, max_tokens = 1500) {
-  return callAnalyze({ input, context: ctx, profile, max_tokens });
-}
+export const api = { analyzeDecision };
+export type { DecisionAnalysisResponse as DecisionResult };
+export default api;
