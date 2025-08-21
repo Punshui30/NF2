@@ -1,68 +1,81 @@
-/* Google font must come before anything else (except @charset) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* Google font must come first */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300..900&display=swap');
 
 /* Tailwind layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Base */
+/* ---------- Modern typography + polish ---------- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-body {
-  font-family: 'Inter', sans-serif;
-  background: #0f0f23;
-  color: #ffffff;
-  overflow-x: hidden;
+html, body {
+  height: 100%;
 }
 
-/* Improved text contrast and readability */
-.text-gray-300 { color: #e5e7eb !important; }
-.text-gray-400 { color: #d1d5db !important; }
-.text-white    { color: #ffffff !important; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+body {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background:
+    radial-gradient(1200px 800px at 70% 10%, rgba(88, 28, 135, 0.18), transparent 60%),
+    radial-gradient(900px 600px at 10% 30%, rgba(59, 130, 246, 0.16), transparent 55%),
+    #0b1026;
+  color: #fff;
 
-h1, h2, h3, h4, h5, h6 { color: #ffffff !important; text-shadow: 0 2px 4px rgba(0,0,0,.7); }
-p { color: #f3f4f6 !important; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+  /* crisp font rendering (removes the “rough edges” look) */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures contextual;
+  font-optical-sizing: auto;
+  font-synthesis-weight: none;
+}
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: rgba(255,255,255,.1); }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,.3); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.5); }
+/* Remove heavy text shadows to avoid “cheap/glowy” look */
+h1, h2, h3, h4, h5, h6, p, .text-white, .text-gray-300, .text-gray-400 {
+  text-shadow: none !important;
+}
 
-/* Aurora gradient animations */
-@keyframes aurora { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-.aurora-bg { background: linear-gradient(-45deg,#0f0f23,#1a1a3e,#2d1b69,#4c1d95); background-size:400% 400%; animation: aurora 20s ease infinite; }
+/* Subtle text palette helpers (keeps Tailwind friendly) */
+.text-gray-300 { color: #d9deea !important; }
+.text-gray-400 { color: #b9c0d0 !important; }
+
+/* Scrollbar (subtle) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,.05); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.28); }
 
 /* Glass */
-.glass { background: rgba(255,255,255,.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.2); }
+.glass { background: rgba(255,255,255,.06); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.12); border-radius: 16px; }
 
-.transition-smooth { transition: all .3s cubic-bezier(.4,0,.2,1); }
+/* Soft transitions */
+.transition-smooth { transition: all .25s cubic-bezier(.2,.7,.2,1); }
 
 /* Focus */
-input:focus, textarea:focus, button:focus { outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,.5); }
+input:focus, textarea:focus, button:focus { outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,.45); }
 
 /* Loading */
 @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
 .animate-spin { animation: spin 1s linear infinite; }
 
 /* Gradient text */
-.gradient-text { background: linear-gradient(135deg,#60a5fa,#a855f7,#ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.gradient-text { background: linear-gradient(135deg,#93c5fd,#a78bfa,#f0abfc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 
 /* 3D card hover */
 .card-3d { transform-style: preserve-3d; transition: transform .3s ease; }
-.card-3d:hover { transform: rotateX(5deg) rotateY(5deg) translateZ(10px); }
+.card-3d:hover { transform: rotateX(4deg) rotateY(4deg) translateZ(6px); }
 
 /* Float */
-@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
 .float-animation { animation: float 6s ease-in-out infinite; }
 
-/* Button shimmer */
+/* Button shimmer (very subtle) */
 .btn-shimmer { position: relative; overflow: hidden; }
-.btn-shimmer::before { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background: linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent); transition:left .5s; }
-.btn-shimmer:hover::before { left:100%; }
+.btn-shimmer::before { content:''; position:absolute; inset:0; transform: translateX(-100%); background: linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent); }
+.btn-shimmer:hover::before { transform: translateX(100%); transition: transform .6s; }
 
-/* ===== North Star animations (needed by BreathingNorthStar) ===== */
+/* ===== North Star animations (used by BreathingNorthStar) ===== */
 @keyframes breath {
   0%, 100% { transform: translate(-50%, -50%) scale(0.96); }
   50%      { transform: translate(-50%, -50%) scale(1.04); }
@@ -88,12 +101,12 @@ input:focus, textarea:focus, button:focus { outline: none; box-shadow: 0 0 0 2px
 /* Mobile */
 @media (max-width:768px) {
   .mobile-padding{padding-left:1rem; padding-right:1rem}
-  .mobile-text{font-size:.875rem}
+  .mobile-text{font-size:.95rem}
 }
 
 /* High contrast */
 @media (prefers-contrast: high) {
-  .glass{ background: rgba(0,0,0,.8); border:2px solid rgba(255,255,255,.8);}
+  .glass{ background: rgba(0,0,0,.85); border:2px solid rgba(255,255,255,.85);}
 }
 
 /* Reduced motion */
