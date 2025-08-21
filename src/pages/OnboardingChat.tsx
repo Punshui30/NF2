@@ -3,9 +3,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../contexts/AppContext";
 import { profileStore, completeness, Profile } from "../services/profileStore";
-import { analyze } from "../services/api";
 import { CinematicButton } from "../components/ui/CinematicButton";
-import { BreathingNorthStar } from "../components/BreathingNorthStar";
+import BreathingNorthStar from "../components/BreathingNorthStar"; // <-- default import
 import { Sparkles, Send, CheckCircle2 } from "lucide-react";
 
 type Msg = { role: "assistant" | "user"; text: string };
@@ -44,7 +43,9 @@ export default function OnboardingChat() {
 
   const pct = Math.round(completeness(draft) * 100);
   const endRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, busy]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, busy]);
 
   async function send() {
     const text = input.trim();
@@ -72,7 +73,7 @@ export default function OnboardingChat() {
         setDraft((d) => ({ ...d, ...data.profilePatch }));
       }
       setMessages((m) => [...m, { role: "assistant", text: data?.reply || "Got it. Tell me more." }]);
-    } catch (e) {
+    } catch {
       setMessages((m) => [
         ...m,
         { role: "assistant", text: "Hmm, my analysis service hit a snag. Try again in a moment." },
@@ -112,10 +113,10 @@ export default function OnboardingChat() {
               </div>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-sm text-white/80">
-            <CheckCircle2 className="w-4 h-4 text-green-400" />
-            {pct}% complete
-          </div>
+            <div className="hidden sm:flex items-center gap-2 text-sm text-white/80">
+              <CheckCircle2 className="w-4 h-4 text-green-400" />
+              {pct}% complete
+            </div>
         </div>
 
         {/* Chips */}
