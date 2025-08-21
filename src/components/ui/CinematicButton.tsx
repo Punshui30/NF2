@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { DivideIcon as LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface CinematicButtonProps {
   children: React.ReactNode;
@@ -40,14 +40,14 @@ export const CinematicButton: React.FC<CinematicButtonProps> = ({
   };
 
   const baseClasses = "relative overflow-hidden font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 transform-gpu";
-  
+
   const variantClasses = {
     primary: "bg-gradient-to-r from-blue-500 via-purple-600 to-pink-500 text-white shadow-2xl hover:shadow-blue-500/25",
     secondary: "bg-white/10 text-white border border-white/20 backdrop-blur-md hover:bg-white/20 hover:border-white/40",
     ghost: "text-white hover:bg-white/10 hover:backdrop-blur-md",
     aurora: "bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 text-white shadow-2xl hover:shadow-purple-500/30"
   };
-  
+
   const sizeClasses = {
     sm: "px-4 py-2 text-sm",
     md: "px-6 py-3 text-base",
@@ -68,9 +68,9 @@ export const CinematicButton: React.FC<CinematicButtonProps> = ({
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
       onMouseLeave={() => setIsPressed(false)}
-      whileHover={disabled || loading ? {} : { 
+      whileHover={disabled || loading ? {} : {
         scale: 1.05,
-        boxShadow: variant === 'primary' 
+        boxShadow: variant === 'primary'
           ? "0 20px 40px -10px rgba(59, 130, 246, 0.4)"
           : "0 10px 30px -5px rgba(255, 255, 255, 0.2)"
       }}
@@ -79,7 +79,7 @@ export const CinematicButton: React.FC<CinematicButtonProps> = ({
         rotateX: isPressed ? 5 : 0,
         rotateY: isPressed ? 2 : 0,
       }}
-      transition={{ 
+      transition={{
         type: "spring",
         stiffness: 400,
         damping: 30
@@ -87,13 +87,13 @@ export const CinematicButton: React.FC<CinematicButtonProps> = ({
       disabled={disabled || loading}
     >
       {/* Animated background layers */}
-      <motion.div 
+      <motion.div
         className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
         initial={{ x: '-100%' }}
         animate={{ x: isPressed ? '100%' : '-100%' }}
         transition={{ duration: 0.6, ease: "easeInOut" }}
       />
-      
+
       {/* Particle burst effect */}
       {isPressed && (
         <div className="absolute inset-0 overflow-hidden">
@@ -117,18 +117,18 @@ export const CinematicButton: React.FC<CinematicButtonProps> = ({
           ))}
         </div>
       )}
-      
+
       {/* Content */}
       <div className="relative flex items-center gap-2 z-10">
         {loading ? (
-          <motion.div 
+          <motion.div
             className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
         ) : Icon ? (
           <motion.div
-            animate={{ 
+            animate={{
               rotate: isPressed ? [0, -10, 10, 0] : 0,
               scale: isPressed ? [1, 0.9, 1.1, 1] : 1
             }}
@@ -137,7 +137,7 @@ export const CinematicButton: React.FC<CinematicButtonProps> = ({
             <Icon className="w-5 h-5" />
           </motion.div>
         ) : null}
-        
+
         <motion.span
           animate={{
             y: isPressed ? [0, -2, 0] : 0,
@@ -147,12 +147,12 @@ export const CinematicButton: React.FC<CinematicButtonProps> = ({
           {children}
         </motion.span>
       </div>
-      
+
       {/* Glow effect */}
       <motion.div
         className="absolute inset-0 rounded-xl opacity-0"
         style={{
-          background: variant === 'aurora' 
+          background: variant === 'aurora'
             ? 'radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, transparent 70%)'
             : 'radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%)'
         }}
