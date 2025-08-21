@@ -1,16 +1,16 @@
-// src/pages/OnboardingChat.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../contexts/AppContext";
 import { profileStore, completeness, Profile } from "../services/profileStore";
 import { CinematicButton } from "../components/ui/CinematicButton";
-import BreathingNorthStar from "../components/BreathingNorthStar"; // <-- default import
+import BreathingNorthStar from "../components/BreathingNorthStar";
+import VoiceInputButton from "../components/VoiceInputButton";
 import { Sparkles, Send, CheckCircle2 } from "lucide-react";
 
 type Msg = { role: "assistant" | "user"; text: string };
 
 const seedAssistant =
-  "I’m your NorthForm guide. Talk to me like you would a trusted friend. You can paste chats, describe goals, values, constraints—whatever paints an honest picture. I’ll ask for what I need and keep score as your North Star brightens.";
+  "I’m your NorthForm guide. Talk to me like you would a trusted friend. Paste chats, describe goals, values, constraints—whatever paints an honest picture. I’ll ask for what I need and brighten your North Star as we go.";
 
 export default function OnboardingChat() {
   const navigate = useNavigate();
@@ -20,7 +20,6 @@ export default function OnboardingChat() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // local working copy that we’ll merge back to store
   const [draft, setDraft] = useState<Profile>({
     name: base.name || "",
     email: base.email || "",
@@ -55,19 +54,12 @@ export default function OnboardingChat() {
     setBusy(true);
 
     try {
-      // Call the same /api/analyze Netlify function, but in "coach" mode to extract profilePatch + reply.
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "coach",
-          message: text,
-          profile: draft,
-        }),
+        body: JSON.stringify({ mode: "coach", message: text, profile: draft }),
       });
-
       if (!res.ok) throw new Error(`analyze ${res.status}`);
-
       const data = await res.json();
       if (data?.profilePatch && typeof data.profilePatch === "object") {
         setDraft((d) => ({ ...d, ...data.profilePatch }));
@@ -76,7 +68,7 @@ export default function OnboardingChat() {
     } catch {
       setMessages((m) => [
         ...m,
-        { role: "assistant", text: "Hmm, my analysis service hit a snag. Try again in a moment." },
+        { role: "assistant", text: "I hit a snag talking to my brain. Try again in a moment." },
       ]);
     } finally {
       setBusy(false);
@@ -85,7 +77,7 @@ export default function OnboardingChat() {
 
   function finish() {
     profileStore.merge(draft);
-    (window as any).__NF_PROFILE__ = draft; // debug
+    (window as any).__NF_PROFILE__ = draft;
     dispatch({ type: "COMPLETE_ONBOARDING" });
     navigate("/dashboard");
   }
@@ -102,24 +94,20 @@ export default function OnboardingChat() {
   return (
     <div className="min-h-screen bg-[#0b1026] text-white">
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-28">
-        {/* Header */}
         <div className="flex items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
             <BreathingNorthStar completeness={pct / 100} />
             <div>
               <div className="text-xl sm:text-2xl font-bold">Conversational Onboarding</div>
-              <div className="text-white/70 text-xs sm:text-sm">
-                Share freely—I'll infer patterns and fill in the blanks for you.
-              </div>
+              <div className="text-white/70 text-xs sm:text-sm">Share freely—I'll infer patterns for you.</div>
             </div>
           </div>
-            <div className="hidden sm:flex items-center gap-2 text-sm text-white/80">
-              <CheckCircle2 className="w-4 h-4 text-green-400" />
-              {pct}% complete
-            </div>
+          <div className="hidden sm:flex items-center gap-2 text-sm text-white/80">
+            <CheckCircle2 className="w-4 h-4 text-green-400" />
+            {pct}% complete
+          </div>
         </div>
 
-        {/* Chips */}
         <div className="flex flex-wrap gap-2 mb-4">
           {hintChips.map((c) => (
             <button
@@ -132,7 +120,6 @@ export default function OnboardingChat() {
           ))}
         </div>
 
-        {/* Chat thread */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === "assistant" ? "justify-start" : "justify-end"}`}>
@@ -149,27 +136,32 @@ export default function OnboardingChat() {
           ))}
           {busy && (
             <div className="text-white/70 text-sm">
-              Analyzing… applying values, constraints, parts (IFS), goals, tone, and decision patterns…
+              Analyzing… IFS parts, values/anti-values, constraints, goals, tone, patterns…
             </div>
           )}
           <div ref={endRef} />
         </div>
 
-        {/* Composer */}
-        <div className="mt-4 flex gap-2">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => (e.key === "Enter" && !e.shiftKey ? (e.preventDefault(), send()) : null)}
-            placeholder="Type or paste anything—values, goals, chats, constraints…"
-            className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 outline-none focus:ring-2 focus:ring-blue-500/40"
+        <div className="mt-4 flex flex-col sm:flex-row gap-2">
+          <div className="flex-1 flex gap-2">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => (e.key === "Enter" && !e.shiftKey ? (e.preventDefault(), send()) : null)}
+              placeholder="Speak or type anything—values, goals, chats, constraints…"
+              className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 outline-none focus:ring-2 focus:ring-blue-500/40"
+            />
+            <CinematicButton icon={Send} onClick={send} disabled={busy}>
+              Send
+            </CinematicButton>
+          </div>
+          <VoiceInputButton
+            className="sm:ml-2"
+            onAppend={(t) => setInput((v) => (v ? v + " " : "") + t)}
+            label="Speak answer"
           />
-          <CinematicButton icon={Send} onClick={send} disabled={busy}>
-            Send
-          </CinematicButton>
         </div>
 
-        {/* Finish */}
         <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
           <CinematicButton variant="aurora" icon={Sparkles} onClick={finish}>
             Continue to Dashboard
