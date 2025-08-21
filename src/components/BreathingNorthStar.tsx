@@ -1,13 +1,13 @@
 import React, { useMemo } from "react";
 
 type Props = {
-  /** 0 → 1 */
+  /** value between 0 and 1 */
   completeness?: number;
-  /** px */
+  /** pixel size of the widget (outer diameter) */
   size?: number;
-  /** show % label next to the star */
+  /** show percentage label */
   showLabel?: boolean;
-  /** compact layout (smaller ring, smaller label) */
+  /** slightly tighter visuals */
   compact?: boolean;
   className?: string;
 };
@@ -21,17 +21,15 @@ export const BreathingNorthStar: React.FC<Props> = ({
 }) => {
   const pct = Math.max(0, Math.min(1, completeness));
   const ringDeg = useMemo(() => `${Math.round(pct * 360)}deg`, [pct]);
+
   const dim = size;
-  const ring = compact ? 4 : 6; // ring thickness
+  const ring = compact ? 4 : 6;
   const core = dim - ring * 2;
 
   return (
     <div className={`flex items-center gap-3 ${className}`} aria-label="North star progress">
-      <div
-        className="relative"
-        style={{ width: dim, height: dim, minWidth: dim, minHeight: dim }}
-      >
-        {/* Progress ring (conic) */}
+      <div className="relative" style={{ width: dim, height: dim, minWidth: dim, minHeight: dim }}>
+        {/* progress ring */}
         <div
           className="absolute inset-0 rounded-full"
           style={{
@@ -39,14 +37,10 @@ export const BreathingNorthStar: React.FC<Props> = ({
             filter: "drop-shadow(0 0 10px rgba(96,165,250,0.35))",
           }}
         />
+        {/* inner mask -> ring thickness */}
+        <div className="absolute rounded-full bg-[#0b1026]" style={{ inset: ring }} />
 
-        {/* Inner mask to create ring thickness */}
-        <div
-          className="absolute inset-0 rounded-full bg-[#0b1026]"
-          style={{ inset: ring }}
-        />
-
-        {/* Core glow */}
+        {/* core glow (breathing) */}
         <div
           className="absolute rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-breath"
           style={{
@@ -59,18 +53,16 @@ export const BreathingNorthStar: React.FC<Props> = ({
           }}
         />
 
-        {/* Cross flare */}
+        {/* subtle cross flare */}
         <div
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
           style={{ width: core, height: core }}
         >
-          <div className="absolute inset-0">
-            <div className="absolute left-1/2 top-0 -translate-x-1/2 h-full w-[1.5px] bg-white/45 blur-[0.5px]" />
-            <div className="absolute top-1/2 left-0 -translate-y-1/2 h-[1.5px] w-full bg-white/45 blur-[0.5px]" />
-          </div>
+          <div className="absolute left-1/2 top-0 -translate-x-1/2 h-full w-[1.5px] bg-white/45 blur-[0.5px]" />
+          <div className="absolute top-1/2 left-0 -translate-y-1/2 h-[1.5px] w-full bg-white/45 blur-[0.5px]" />
         </div>
 
-        {/* Orbiting twinkles */}
+        {/* orbiting twinkles */}
         <span className="absolute -top-1/2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white/80 animate-orbit" />
         <span className="absolute -right-1/2 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-blue-200/80 animate-orbit-slow" />
         <span className="absolute -bottom-1/2 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-fuchsia-200/80 animate-orbit-rev" />
