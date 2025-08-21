@@ -1,15 +1,10 @@
-/* src/index.css — FULL FILE */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: 'Inter', sans-serif;
@@ -32,27 +27,26 @@ p { color: #f3f4f6 !important; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.3); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.5); }
 
-/* Aurora */
+/* Aurora gradient animations */
 @keyframes aurora { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
 .aurora-bg { background: linear-gradient(-45deg,#0f0f23,#1a1a3e,#2d1b69,#4c1d95); background-size:400% 400%; animation: aurora 20s ease infinite; }
 
 /* Glass */
 .glass { background: rgba(255,255,255,.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.2); }
 
-/* Transitions */
 .transition-smooth { transition: all .3s cubic-bezier(.4,0,.2,1); }
 
 /* Focus */
-input:focus, textarea:focus, button:focus { outline: none; ring: 2px; ring-color: rgba(59,130,246,.5); }
+input:focus, textarea:focus, button:focus { outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,.5); }
 
 /* Loading */
 @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
 .animate-spin { animation: spin 1s linear infinite; }
 
 /* Gradient text */
-.gradient-text { background: linear-gradient(135deg,#60a5fa,#a855f7,#ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.gradient-text { background: linear-gradient(135deg,#60a5fa,#a855f7,#ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 
-/* 3D card */
+/* 3D card hover */
 .card-3d { transform-style: preserve-3d; transition: transform .3s ease; }
 .card-3d:hover { transform: rotateX(5deg) rotateY(5deg) translateZ(10px); }
 
@@ -66,10 +60,10 @@ input:focus, textarea:focus, button:focus { outline: none; ring: 2px; ring-color
 .btn-shimmer:hover::before { left:100%; }
 
 /* Mobile */
-@media (max-width:768px){ .mobile-padding{padding-left:1rem; padding-right:1rem} .mobile-text{font-size:.875rem} }
+@media (max-width:768px) { .mobile-padding{padding-left:1rem; padding-right:1rem} .mobile-text{font-size:.875rem} }
 
 /* High contrast */
-@media (prefers-contrast:high){ .glass{background:rgba(0,0,0,.8); border:2px solid rgba(255,255,255,.8)} }
+@media (prefers-contrast: high) { .glass{ background: rgba(0,0,0,.8); border:2px solid rgba(255,255,255,.8);} }
 
 /* Reduced motion */
-@media (prefers-reduced-motion:reduce){ *{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important} }
+@media (prefers-reduced-motion: reduce) { *{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
