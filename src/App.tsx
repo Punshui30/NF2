@@ -1,8 +1,8 @@
-// src/App.tsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider, useApp } from "./contexts/AppContext";
 import { EnhancedLandingPage } from "./pages/EnhancedLandingPage";
+import OnboardingChat from "./pages/OnboardingChat";
 import OnboardingSmart from "./pages/OnboardingSmart";
 import Dashboard from "./pages/Dashboard";
 import { DecisionCompassPage } from "./pages/DecisionCompassPage";
@@ -12,7 +12,8 @@ const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route path="/" element={<EnhancedLandingPage />} />
-      <Route path="/onboarding" element={<OnboardingSmart />} />
+      <Route path="/onboarding" element={<OnboardingChat />} />
+      <Route path="/onboarding-smart" element={<OnboardingSmart />} />
       <Route
         path="/dashboard"
         element={state.onboardingComplete ? <Dashboard /> : <Navigate to="/onboarding" replace />}
