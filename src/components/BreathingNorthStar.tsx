@@ -1,4 +1,3 @@
-// src/components/BreathingNorthStar.tsx
 import React, { useMemo } from "react";
 
 type Props = {
@@ -44,9 +43,7 @@ export const BreathingNorthStar: React.FC<Props> = ({
         {/* Inner mask to create ring thickness */}
         <div
           className="absolute inset-0 rounded-full bg-[#0b1026]"
-          style={{
-            inset: ring,
-          }}
+          style={{ inset: ring }}
         />
 
         {/* Core glow */}
