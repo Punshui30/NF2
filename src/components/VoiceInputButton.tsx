@@ -1,45 +1,61 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Mic, MicOff } from "lucide-react";
 
-declare global {
-  interface Window { webkitSpeechRecognition: any; SpeechRecognition: any; }
-}
+type Props = {
+  onAppend: (text: string) => void;
+  label?: string;
+  className?: string;
+};
 
-export default function VoiceInputButton({
-  onAppend,
-  label = "Speak",
-}: { onAppend: (text: string) => void; label?: string }) {
-  const [rec, setRec] = useState<any>(null);
-  const active = useRef(false);
+export default function VoiceInputButton({ onAppend, label = "Speak", className = "" }: Props) {
+  const [listening, setListening] = useState(false);
+  const [supported, setSupported] = useState(false);
+  const recRef = useRef<any>(null);
 
-  function start() {
-    const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!R) { alert("Voice input not supported in this browser."); return; }
-    const r = new R();
-    r.lang = "en-US";
-    r.interimResults = false;
-    r.onresult = (e: any) => {
-      const t = Array.from(e.results).map((res: any) => res[0].transcript).join(" ");
+  useEffect(() => {
+    const SR: any = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    if (!SR) return;
+    setSupported(true);
+    const rec = new SR();
+    rec.lang = "en-US";
+    rec.continuous = false;
+    rec.interimResults = false;
+
+    rec.onresult = (e: any) => {
+      const t = Array.from(e.results).map((r: any) => r[0].transcript).join(" ");
       if (t) onAppend(t.trim());
     };
-    r.onend = () => (active.current = false);
-    active.current = true;
-    setRec(r);
-    r.start();
-  }
+    rec.onend = () => setListening(false);
+    recRef.current = rec;
+  }, [onAppend]);
 
-  function stop() { if (rec && active.current) rec.stop(); }
+  const toggle = () => {
+    if (!supported) return;
+    if (listening) {
+      recRef.current?.stop?.();
+      setListening(false);
+    } else {
+      try {
+        recRef.current?.start?.();
+        setListening(true);
+      } catch {
+        setListening(false);
+      }
+    }
+  };
+
+  const BtnIcon = listening ? MicOff : Mic;
 
   return (
     <button
       type="button"
-      onMouseDown={start}
-      onMouseUp={stop}
-      onTouchStart={start}
-      onTouchEnd={stop}
-      className="px-2 py-1 rounded-lg bg-white/10 border border-white/20 text-white text-sm"
-      title="Hold to talk"
+      onClick={toggle}
+      disabled={!supported}
+      title={supported ? label : "Voice input not supported in this browser"}
+      className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/15 disabled:opacity-50 ${className}`}
     >
-      {label}
+      <BtnIcon className="w-4 h-4" />
+      <span className="text-sm">{listening ? "Listening…" : label}</span>
     </button>
   );
 }
