@@ -16,7 +16,6 @@ export type DecisionAnalysisResponse = {
 
 const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };
 
-/** Call Netlify function /api/analyze (see netlify.toml redirects). */
 export async function analyzeDecision(
   decision: string,
   options: string[],
@@ -37,21 +36,15 @@ export async function analyzeDecision(
 
   return {
     confidence: typeof data.confidence === "number" ? data.confidence : 60,
-    recommendation:
-      typeof data.recommendation === "string"
-        ? data.recommendation
-        : "No recommendation available.",
+    recommendation: typeof data.recommendation === "string" ? data.recommendation : "No recommendation available.",
     reasoning: Array.isArray(data.reasoning) ? data.reasoning : [],
     suggestedNextSteps: Array.isArray(data.suggestedNextSteps) ? data.suggestedNextSteps : [],
     raw: data,
   };
 }
 
-/** Back-compat named export */
+// Back-compat for OnboardingChat and older pages
 export const analyze = analyzeDecision;
 
-/** Object export for pages that import { api } */
 export const api = { analyzeDecision, analyze };
-
-export type { DecisionAnalysisResponse as DecisionResult };
 export default api;
