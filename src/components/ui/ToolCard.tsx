@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { DivideIcon as LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface ToolCardProps {
   title: string;
@@ -33,7 +33,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({
         ${className}
       `}
       onClick={disabled ? undefined : onClick}
-      whileHover={disabled ? {} : { 
+      whileHover={disabled ? {} : {
         y: -10,
         rotateX: 5,
         rotateY: 5,
@@ -41,7 +41,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({
       whileTap={disabled ? {} : { scale: 0.95 }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ 
+      transition={{
         type: "spring",
         stiffness: 300,
         damping: 30
@@ -49,7 +49,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({
     >
       {/* Animated background gradient */}
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      
+
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col">
         <div className="flex items-center mb-4">
@@ -57,21 +57,21 @@ export const ToolCard: React.FC<ToolCardProps> = ({
             <Icon className="w-6 h-6 text-white" />
           </div>
         </div>
-        
+
         <h3 className="text-xl font-bold text-white mb-2 group-hover:text-blue-200 transition-colors duration-300">
           {title}
         </h3>
-        
+
         <p className="text-gray-300 text-sm leading-relaxed flex-1">
           {description}
         </p>
-        
+
         {/* Hover effect indicator */}
         <div className="mt-4 flex items-center text-blue-300 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
           <span className="text-sm font-medium">Explore →</span>
         </div>
       </div>
-      
+
       {/* 3D shadow effect */}
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
     </motion.div>
