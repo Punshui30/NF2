@@ -1,172 +1,197 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useApp } from "../contexts/AppContext";
-import { profileStore, completeness, Profile } from "../services/profileStore";
+import { Sparkles, Send, CheckCircle2, Mic, Square } from "lucide-react";
 import { CinematicButton } from "../components/ui/CinematicButton";
-import BreathingNorthStar from "../components/BreathingNorthStar";
-import VoiceInputButton from "../components/VoiceInputButton";
-import { Sparkles, Send, CheckCircle2 } from "lucide-react";
+import { BreathingNorthStar } from "../components/BreathingNorthStar"; // if your file exports default, change import accordingly
+import { analyze } from "../services/api";
+import { profileStore } from "../services/profileStore";
+import { useApp } from "../contexts/AppContext";
 
-type Msg = { role: "assistant" | "user"; text: string };
-
-const seedAssistant =
-  "I’m your NorthForm guide. Talk to me like you would a trusted friend. Paste chats, describe goals, values, constraints—whatever paints an honest picture. I’ll ask for what I need and brighten your North Star as we go.";
+type Msg = { role: "user" | "assistant" | "system"; content: string };
 
 export default function OnboardingChat() {
   const navigate = useNavigate();
   const { dispatch } = useApp();
-  const base = profileStore.get();
-  const [messages, setMessages] = useState<Msg[]>([{ role: "assistant", text: seedAssistant }]);
+
+  const [messages, setMessages] = useState<Msg[]>([
+    {
+      role: "assistant",
+      content:
+        "Welcome. I’ll learn your patterns through a brief conversation. Share anything you like—recent chats, top values, a 90-day focus—and I’ll stitch it together. Ready?",
+    },
+  ]);
   const [input, setInput] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [draft, setDraft] = useState<Profile>({
-    name: base.name || "",
-    email: base.email || "",
-    lifeVision: base.lifeVision || "",
-    goal90d: base.goal90d || "",
-    goal12m: base.goal12m || "",
-    horizon: base.horizon || "90d",
-    values: base.values || [],
-    antiValues: base.antiValues || [],
-    decisionStyle: base.decisionStyle || "",
-    nonNegs: base.nonNegs || [],
-    constraints: base.constraints || [],
-    conv: base.conv || { fam: "", frd: "", wrk: "" },
-    tags: base.tags || { fam: [], frd: [], wrk: [] },
-    links: base.links || { facebook: "", instagram: "", linkedin: "", x: "", personal: "" },
-    patterns: base.patterns || {},
-    biasNotes: base.biasNotes || "",
-    consent: base.consent || { analyzeLinks: false, voice: false },
-  });
-
-  const pct = Math.round(completeness(draft) * 100);
-  const endRef = useRef<HTMLDivElement | null>(null);
+  // --- simple mic support (Web Speech API) ---
+  const recRef = useRef<SpeechRecognition | null>(null);
+  const [recording, setRecording] = useState(false);
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, busy]);
+    const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SR) {
+      const rec: SpeechRecognition = new SR();
+      rec.lang = "en-US";
+      rec.interimResults = false;
+      rec.continuous = false;
+      rec.onresult = (e: SpeechRecognitionEvent) => {
+        const t = Array.from(e.results).map(r => r[0].transcript).join(" ");
+        setInput(prev => (prev ? prev + " " : "") + t);
+      };
+      rec.onerror = () => setRecording(false);
+      rec.onend = () => setRecording(false);
+      recRef.current = rec;
+    }
+  }, []);
 
-  async function send() {
-    const text = input.trim();
-    if (!text) return;
-    setMessages((m) => [...m, { role: "user", text }]);
+  const startStopMic = () => {
+    if (!recRef.current) return;
+    if (recording) {
+      recRef.current.stop();
+      setRecording(false);
+    } else {
+      setRecording(true);
+      try {
+        recRef.current.start();
+      } catch {
+        setRecording(false);
+      }
+    }
+  };
+  // --- end mic ---
+
+  const completeness = useMemo(() => {
+    // very simple completeness based on what’s been shared
+    const txt = messages.map(m => m.content).join("\n").toLowerCase();
+    let score = 0;
+    if (/value|important|i care/i.test(txt)) score += 0.25;
+    if (/90|day|focus|goal|week|month|year/i.test(txt)) score += 0.25;
+    if (/http|facebook|instagram|linkedin|x\.com|twitter/i.test(txt)) score += 0.1;
+    if (/friend|family|work|colleague|boss|team|client/i.test(txt)) score += 0.25;
+    if (txt.length > 800) score += 0.15;
+    return Math.min(1, score);
+  }, [messages]);
+
+  async function turn(userText: string) {
+    if (!userText.trim()) return;
+    const next = [...messages, { role: "user", content: userText } as Msg];
+    setMessages(next);
     setInput("");
-    setBusy(true);
+    setLoading(true);
 
     try {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "coach", message: text, profile: draft }),
-      });
-      if (!res.ok) throw new Error(`analyze ${res.status}`);
-      const data = await res.json();
-      if (data?.profilePatch && typeof data.profilePatch === "object") {
-        setDraft((d) => ({ ...d, ...data.profilePatch }));
+      const result = await analyze(next);
+      const reply: Msg = { role: "assistant", content: result.reply ?? "Noted. Tell me a bit more." };
+      setMessages(prev => [...prev, reply]);
+
+      // save stitched profile fragments
+      if (result.profileFragment) {
+        profileStore.merge(result.profileFragment);
       }
-      setMessages((m) => [...m, { role: "assistant", text: data?.reply || "Got it. Tell me more." }]);
-    } catch {
-      setMessages((m) => [
-        ...m,
-        { role: "assistant", text: "I hit a snag talking to my brain. Try again in a moment." },
+
+      if (result.readyForDashboard) {
+        dispatch({ type: "COMPLETE_ONBOARDING" });
+      }
+    } catch (e) {
+      setMessages(prev => [
+        ...prev,
+        { role: "assistant", content: "I hit a snag analyzing that. Try again in a moment." },
       ]);
     } finally {
-      setBusy(false);
+      setLoading(false);
     }
   }
 
-  function finish() {
-    profileStore.merge(draft);
-    (window as any).__NF_PROFILE__ = draft;
-    dispatch({ type: "COMPLETE_ONBOARDING" });
-    navigate("/dashboard");
-  }
-
-  const hintChips = [
-    "Top 5 values that guide you",
-    "A recent tough decision and why",
-    "Non-negotiables in work or life",
-    "What would ‘great’ look like in 90 days?",
-    "Anything that drains your energy",
-    "Paste a snippet from a recent chat",
-  ];
-
   return (
     <div className="min-h-screen bg-[#0b1026] text-white">
-      <div className="max-w-4xl mx-auto px-4 pt-6 pb-28">
-        <div className="flex items-center justify-between gap-3 mb-4">
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Top */}
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <BreathingNorthStar completeness={pct / 100} />
+            <BreathingNorthStar completeness={completeness} />
             <div>
-              <div className="text-xl sm:text-2xl font-bold">Conversational Onboarding</div>
-              <div className="text-white/70 text-xs sm:text-sm">Share freely—I'll infer patterns for you.</div>
+              <div className="text-xl font-semibold">Conversational Onboarding</div>
+              <div className="text-white/70 text-sm">Speak or type. I’ll learn your patterns fast.</div>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-sm text-white/80">
-            <CheckCircle2 className="w-4 h-4 text-green-400" />
-            {pct}% complete
-          </div>
+          {completeness >= 0.75 && (
+            <CinematicButton
+              variant="secondary"
+              icon={CheckCircle2}
+              onClick={() => {
+                dispatch({ type: "COMPLETE_ONBOARDING" });
+                navigate("/dashboard");
+              }}
+            >
+              Finish
+            </CinematicButton>
+          )}
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-4">
-          {hintChips.map((c) => (
+        {/* Chat window */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  m.role === "user"
+                    ? "bg-gradient-to-r from-blue-500/30 to-fuchsia-500/30 border border-white/15"
+                    : "bg-white/5 border border-white/10"
+                }`}
+              >
+                {m.content}
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div className="flex items-center gap-2 text-white/70 text-sm">
+              <Sparkles className="w-4 h-4 animate-pulse" />
+              Thinking…
+            </div>
+          )}
+        </div>
+
+        {/* Input row */}
+        <div className="mt-4 flex items-center gap-2">
+          <button
+            onClick={startStopMic}
+            className={`rounded-xl border px-3 py-2 flex items-center gap-2 ${
+              recording ? "border-red-400/60 bg-red-400/10" : "border-white/20 bg-white/5"
+            }`}
+            title={recording ? "Stop" : "Speak"}
+          >
+            {recording ? <Square className="w-4 h-4 text-red-300" /> : <Mic className="w-4 h-4 text-white/80" />}
+            <span className="text-sm">{recording ? "Listening…" : "Speak"}</span>
+          </button>
+
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && turn(input)}
+            placeholder="Tell me a value, a goal, or paste a few recent messages…"
+            className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 outline-none focus:ring-2 focus:ring-blue-500/40"
+          />
+
+          <CinematicButton icon={Send} onClick={() => turn(input)}>
+            Send
+          </CinematicButton>
+        </div>
+
+        {/* Helper chips */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[
+            "Top 3 values are…",
+            "My 90-day focus is…",
+            "Here’s a short chat with a friend:",
+            "Bias to watch: I avoid conflict…",
+          ].map((c) => (
             <button
               key={c}
-              onClick={() => setInput((v) => (v ? v + " " : "") + c)}
-              className="text-xs sm:text-sm px-3 py-1.5 rounded-full bg-white/10 border border-white/15 hover:bg-white/15 transition"
+              onClick={() => turn(c)}
+              className="text-xs px-3 py-1.5 rounded-full border border-white/15 bg-white/5 hover:bg-white/10"
             >
               {c}
             </button>
           ))}
-        </div>
-
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4">
-          {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "assistant" ? "justify-start" : "justify-end"}`}>
-              <div
-                className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-4 py-3 leading-relaxed ${
-                  m.role === "assistant"
-                    ? "bg-white/10 border border-white/15"
-                    : "bg-gradient-to-r from-blue-500 to-fuchsia-500"
-                }`}
-              >
-                {m.text}
-              </div>
-            </div>
-          ))}
-          {busy && (
-            <div className="text-white/70 text-sm">
-              Analyzing… IFS parts, values/anti-values, constraints, goals, tone, patterns…
-            </div>
-          )}
-          <div ref={endRef} />
-        </div>
-
-        <div className="mt-4 flex flex-col sm:flex-row gap-2">
-          <div className="flex-1 flex gap-2">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => (e.key === "Enter" && !e.shiftKey ? (e.preventDefault(), send()) : null)}
-              placeholder="Speak or type anything—values, goals, chats, constraints…"
-              className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 outline-none focus:ring-2 focus:ring-blue-500/40"
-            />
-            <CinematicButton icon={Send} onClick={send} disabled={busy}>
-              Send
-            </CinematicButton>
-          </div>
-          <VoiceInputButton
-            className="sm:ml-2"
-            onAppend={(t) => setInput((v) => (v ? v + " " : "") + t)}
-            label="Speak answer"
-          />
-        </div>
-
-        <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
-          <CinematicButton variant="aurora" icon={Sparkles} onClick={finish}>
-            Continue to Dashboard
-          </CinematicButton>
-          <div className="text-white/70 text-xs sm:text-sm">Autosaves when you finish.</div>
         </div>
       </div>
     </div>
