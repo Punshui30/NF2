@@ -1,68 +1,77 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { UserProfile, AnalysisResult } from '../types';
+// src/contexts/AppContext.tsx
+import React, { createContext, useContext, useEffect, useReducer } from "react";
 
-interface AppState {
-  user: UserProfile | null;
-  isLoading: boolean;
-  currentAnalysis: AnalysisResult | null;
-  history: AnalysisResult[];
+type State = {
   onboardingComplete: boolean;
-}
-
-type AppAction =
-  | { type: 'SET_USER'; payload: UserProfile }
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ANALYSIS'; payload: AnalysisResult }
-  | { type: 'ADD_TO_HISTORY'; payload: AnalysisResult }
-  | { type: 'COMPLETE_ONBOARDING' }
-  | { type: 'LOGOUT' };
-
-const initialState: AppState = {
-  user: null,
-  isLoading: false,
-  currentAnalysis: null,
-  history: [],
-  onboardingComplete: false,
+  history: any[];
 };
 
-const AppContext = createContext<{
-  state: AppState;
-  dispatch: React.Dispatch<AppAction>;
-} | null>(null);
+type Action =
+  | { type: "COMPLETE_ONBOARDING" }
+  | { type: "RESET_ONBOARDING" }
+  | { type: "ADD_TO_HISTORY"; payload: any };
 
-function appReducer(state: AppState, action: AppAction): AppState {
+const ONBOARD_KEY = "nf:onboardingComplete";
+const HISTORY_KEY = "nf:history";
+
+function loadBool(key: string, fallback = false) {
+  try {
+    const v = localStorage.getItem(key);
+    return v === "true" ? true : v === "false" ? false : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function loadJSON<T>(key: string, fallback: T): T {
+  try {
+    const v = localStorage.getItem(key);
+    return v ? (JSON.parse(v) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+const initialState: State = {
+  onboardingComplete: loadBool(ONBOARD_KEY, false),
+  history: loadJSON(HISTORY_KEY, [] as any[]),
+};
+
+function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case 'SET_USER':
-      return { ...state, user: action.payload };
-    case 'SET_LOADING':
-      return { ...state, isLoading: action.payload };
-    case 'SET_ANALYSIS':
-      return { ...state, currentAnalysis: action.payload };
-    case 'ADD_TO_HISTORY':
-      return { ...state, history: [action.payload, ...state.history] };
-    case 'COMPLETE_ONBOARDING':
+    case "COMPLETE_ONBOARDING": {
+      try { localStorage.setItem(ONBOARD_KEY, "true"); } catch {}
       return { ...state, onboardingComplete: true };
-    case 'LOGOUT':
-      return initialState;
+    }
+    case "RESET_ONBOARDING": {
+      try { localStorage.setItem(ONBOARD_KEY, "false"); localStorage.removeItem(HISTORY_KEY); } catch {}
+      return { ...state, onboardingComplete: false, history: [] };
+    }
+    case "ADD_TO_HISTORY": {
+      const next = [action.payload, ...state.history];
+      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next)); } catch {}
+      return { ...state, history: next };
+    }
     default:
       return state;
   }
 }
 
-export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(appReducer, initialState);
+const Ctx = createContext<{ state: State; dispatch: React.Dispatch<Action> } | undefined>(undefined);
 
-  return (
-    <AppContext.Provider value={{ state, dispatch }}>
-      {children}
-    </AppContext.Provider>
-  );
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  // Keep history in localStorage in case it was changed elsewhere
+  useEffect(() => {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(state.history)); } catch {}
+  }, [state.history]);
+
+  return <Ctx.Provider value={{ state, dispatch }}>{children}</Ctx.Provider>;
 };
 
-export const useApp = () => {
-  const context = useContext(AppContext);
-  if (!context) {
-    throw new Error('useApp must be used within an AppProvider');
-  }
-  return context;
-};
+export function useApp() {
+  const ctx = useContext(Ctx);
+  if (!ctx) throw new Error("useApp must be used within AppProvider");
+  return ctx;
+}
