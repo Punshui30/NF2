@@ -1,4 +1,5 @@
 // src/services/api.ts
+
 export type DecisionAnalysisRequest = {
   decision: string;
   options: string[];
@@ -17,9 +18,9 @@ const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };
 
 /**
  * Calls the Netlify function at /api/analyze.
- * Netlify redirect in netlify.toml routes /api/* -> /.netlify/functions/:splat
+ * netlify.toml redirects /api/* -> /.netlify/functions/:splat
  */
-async function analyzeDecision(
+export async function analyzeDecision(
   decision: string,
   options: string[],
   userInputs: Record<string, any> = {}
@@ -39,13 +40,21 @@ async function analyzeDecision(
 
   return {
     confidence: typeof data.confidence === "number" ? data.confidence : 60,
-    recommendation: typeof data.recommendation === "string" ? data.recommendation : "No recommendation available.",
+    recommendation:
+      typeof data.recommendation === "string"
+        ? data.recommendation
+        : "No recommendation available.",
     reasoning: Array.isArray(data.reasoning) ? data.reasoning : [],
     suggestedNextSteps: Array.isArray(data.suggestedNextSteps) ? data.suggestedNextSteps : [],
     raw: data,
   };
 }
 
-export const api = { analyzeDecision };
+/** Back-compat export for files importing { analyze } */
+export const analyze = analyzeDecision;
+
+/** Object export for files importing { api } */
+export const api = { analyzeDecision, analyze };
+
 export type { DecisionAnalysisResponse as DecisionResult };
 export default api;
