@@ -1,71 +1,68 @@
-// netlify/functions/analyze.ts
-export default async (req: Request) => {
+import type { Handler } from "@netlify/functions";
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+export const handler: Handler = async (event) => {
   try {
-    if (req.method === "GET") {
-      return new Response(JSON.stringify({ ok: true }), {
-        headers: { "content-type": "application/json" },
-      });
+    if (event.httpMethod === "OPTIONS") {
+      return { statusCode: 204, headers: cors(), body: "" };
     }
-    if (req.method !== "POST") {
-      return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 });
+    if (event.httpMethod !== "POST") {
+      return { statusCode: 405, headers: cors(), body: "Method Not Allowed" };
     }
 
-    const { input, context = {}, profile = {}, max_tokens = 1200 } = await req.json();
+    const { input, context, profile, max_tokens = 1500 } = JSON.parse(event.body || "{}");
 
-    if (!input || typeof input !== "string") {
-      return new Response(JSON.stringify({ error: "input is required (string)" }), { status: 400 });
-    }
+    const system = `
+You are NorthForm, a rigorous life-alignment analyst.
+Apply: Internal Family Systems (parts & Self), cognitive biases, habit loops,
+values alignment, risk framing, temporal discounting, and decision hygiene.
+Ask for missing info. Be specific and actionable. Never invent data.
 
-    const API_KEY = process.env.ANTHROPIC_API_KEY;
-    if (!API_KEY) {
-      return new Response(JSON.stringify({ error: "Server missing ANTHROPIC_API_KEY" }), { status: 500 });
-    }
-    const model = process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-latest";
+When user text implies "parts", identify managers/firefighters/exiles,
+propose gentle unblending, and a short Self-led experiment.
 
-    const systemPrompt =
-      "You are NorthForm's Decision Engine. Be direct, practical, forward-thinking. " +
-      "Silently use cognitive & behavioral science. Use pasted conversation snippets as PRIMARY evidence. " +
-      "Treat any user-added context as SUBJECTIVE and discount it if it conflicts with observed patterns. " +
-      "Identify likely biases (confirmation, availability, status-quo) and counterbalance them. " +
-      "Return EXACTLY four sections: Recommendation; Key Insights (bullets); Next Steps (bullets); Confidence NN%.";
+Return clear sections:
+- Recommendation
+- Key Insights (bullets)
+- Emotional Drivers (bullets)
+- Neural Pathway Shift (one paragraph)
+- Next Steps (numbered)
+- Confidence: NN%
+    `.trim();
 
-    const userContent =
-      [
-        "User input:\n" + input.trim(),
-        Object.keys(context || {}).length ? "\nContext:\n" + JSON.stringify(context) : "",
-        Object.keys(profile || {}).length ? "\nProfile:\n" + JSON.stringify(profile) : "",
-      ].join("");
+    const userBlock = [
+      `INPUT:\n${input}`,
+      profile ? `PROFILE:\n${JSON.stringify(profile).slice(0, 4000)}` : "",
+      context ? `CONTEXT:\n${JSON.stringify(context).slice(0, 2000)}` : ""
+    ].filter(Boolean).join("\n\n");
 
-    const body = {
-      model,
+    const resp = await client.messages.create({
+      model: "claude-3-5-sonnet-latest",
+      system,
       max_tokens,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userContent }],
+      temperature: 0.4,
+      messages: [{ role: "user", content: userBlock }],
+    });
+
+    const text = (resp.content?.map((c: any) => c.text).join("\n") || "").trim() || "No content.";
+
+    return {
+      statusCode: 200,
+      headers: { ...cors(), "Content-Type": "application/json" },
+      body: JSON.stringify({ text, model: resp.model }),
     };
-
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "anthropic-version": "2023-06-01",
-        "x-api-key": API_KEY,
-      },
-      body: JSON.stringify(body),
-    });
-
-    const data = await r.json();
-    if (!r.ok) {
-      return new Response(JSON.stringify({ anthropic_error: data }), { status: 502 });
-    }
-
-    const content = Array.isArray((data as any)?.content) ? (data as any).content : [];
-    const textBlock = content.find((c: any) => c?.type === "text");
-    const text = textBlock?.text || "";
-
-    return new Response(JSON.stringify({ text, model: (data as any)?.model || model }), {
-      headers: { "content-type": "application/json" },
-    });
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message || "Unknown error" }), { status: 500 });
+  } catch (e: any) {
+    console.error("Analyze error:", e?.message || e);
+    return { statusCode: 500, headers: cors(), body: JSON.stringify({ error: "Analyze failed" }) };
   }
 };
+
+function cors() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
