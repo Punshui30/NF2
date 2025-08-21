@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Send, CheckCircle2, Mic, Square } from "lucide-react";
 import { CinematicButton } from "../components/ui/CinematicButton";
-import { BreathingNorthStar } from "../components/BreathingNorthStar"; // if your file exports default, change import accordingly
+import BreathingNorthStar from "../components/BreathingNorthStar"; // default import (also exported as named)
 import { analyze } from "../services/api";
 import { profileStore } from "../services/profileStore";
 import { useApp } from "../contexts/AppContext";
@@ -23,19 +23,20 @@ export default function OnboardingChat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // --- simple mic support (Web Speech API) ---
-  const recRef = useRef<SpeechRecognition | null>(null);
+  // --- mic support via Web Speech API (typed as any to satisfy TS in CI) ---
+  const recRef = useRef<any>(null);
   const [recording, setRecording] = useState(false);
+
   useEffect(() => {
     const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SR) {
-      const rec: SpeechRecognition = new SR();
+      const rec = new SR();
       rec.lang = "en-US";
       rec.interimResults = false;
       rec.continuous = false;
-      rec.onresult = (e: SpeechRecognitionEvent) => {
-        const t = Array.from(e.results).map(r => r[0].transcript).join(" ");
-        setInput(prev => (prev ? prev + " " : "") + t);
+      rec.onresult = (e: any) => {
+        const t = Array.from(e.results).map((r: any) => r[0].transcript).join(" ");
+        setInput((prev) => (prev ? prev + " " : "") + t);
       };
       rec.onerror = () => setRecording(false);
       rec.onend = () => setRecording(false);
@@ -60,13 +61,12 @@ export default function OnboardingChat() {
   // --- end mic ---
 
   const completeness = useMemo(() => {
-    // very simple completeness based on what’s been shared
-    const txt = messages.map(m => m.content).join("\n").toLowerCase();
+    const txt = messages.map((m) => m.content).join("\n").toLowerCase();
     let score = 0;
-    if (/value|important|i care/i.test(txt)) score += 0.25;
-    if (/90|day|focus|goal|week|month|year/i.test(txt)) score += 0.25;
-    if (/http|facebook|instagram|linkedin|x\.com|twitter/i.test(txt)) score += 0.1;
-    if (/friend|family|work|colleague|boss|team|client/i.test(txt)) score += 0.25;
+    if (/value|important|i care/.test(txt)) score += 0.25;
+    if (/(90|30|7)\s*day|focus|goal|week|month|year/.test(txt)) score += 0.25;
+    if (/http|facebook|instagram|linkedin|x\.com|twitter/.test(txt)) score += 0.1;
+    if (/friend|family|work|colleague|boss|team|client/.test(txt)) score += 0.25;
     if (txt.length > 800) score += 0.15;
     return Math.min(1, score);
   }, [messages]);
@@ -81,9 +81,8 @@ export default function OnboardingChat() {
     try {
       const result = await analyze(next);
       const reply: Msg = { role: "assistant", content: result.reply ?? "Noted. Tell me a bit more." };
-      setMessages(prev => [...prev, reply]);
+      setMessages((prev) => [...prev, reply]);
 
-      // save stitched profile fragments
       if (result.profileFragment) {
         profileStore.merge(result.profileFragment);
       }
@@ -91,8 +90,8 @@ export default function OnboardingChat() {
       if (result.readyForDashboard) {
         dispatch({ type: "COMPLETE_ONBOARDING" });
       }
-    } catch (e) {
-      setMessages(prev => [
+    } catch {
+      setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "I hit a snag analyzing that. Try again in a moment." },
       ]);
@@ -142,6 +141,7 @@ export default function OnboardingChat() {
               </div>
             </div>
           ))}
+
           {loading && (
             <div className="flex items-center gap-2 text-white/70 text-sm">
               <Sparkles className="w-4 h-4 animate-pulse" />
