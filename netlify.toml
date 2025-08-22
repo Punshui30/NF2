@@ -3,15 +3,13 @@
   publish = "dist"
 
 [functions]
-  directory = "netlify/functions"
+  node_bundler = "esbuild"
 
-# API to Netlify Functions
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-# SPA fallback so /onboarding, /dashboard, etc. work on refresh
 [[redirects]]
   from = "/*"
   to = "/index.html"
