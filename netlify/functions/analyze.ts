@@ -1,5 +1,5 @@
 // netlify/functions/analyze.ts
-import type { Handler } from "@netlify/functions";
+// Zero-dependency version (no imports), works on Netlify without npm installs.
 
 const ANTHROPIC_API_KEY =
   process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_APIKEY || "";
@@ -24,7 +24,7 @@ const bad = (status: number, msg: string) => ({
   body: JSON.stringify({ error: msg }),
 });
 
-export const handler: Handler = async (event) => {
+export const handler = async (event: any) => {
   // Preflight
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: HDRS, body: "" };
   if (event.httpMethod !== "POST") return bad(405, "Method not allowed");
@@ -66,7 +66,7 @@ UserInputs: ${JSON.stringify(userInputs)}`;
     try {
       const ai = await anthropicJSON(sys, user);
       return ok(ai, { "x-nf-ai": "anthropic" });
-    } catch (e: any) {
+    } catch {
       const firstOption = options.length ? options[0] : "the most feasible option";
       return ok(
         {
@@ -105,7 +105,8 @@ UserMessage: ${body.message}`;
     try {
       const ai = await anthropicJSON(sys, user);
       const reply = typeof ai.reply === "string" ? ai.reply : "Got it. Tell me more.";
-      const profilePatch = typeof ai.profilePatch === "object" && ai.profilePatch ? ai.profilePatch : {};
+      const profilePatch =
+        typeof ai.profilePatch === "object" && ai.profilePatch ? ai.profilePatch : {};
       return ok({ reply, profilePatch }, { "x-nf-ai": "anthropic" });
     } catch {
       return ok(
