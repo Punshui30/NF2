@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, Send, CheckCircle2, Mic, Square, Wand2 } from "lucide-react";
 import { CinematicButton } from "../components/ui/CinematicButton";
 import BreathingNorthStar from "../components/BreathingNorthStar";
-import { analyze } from "../services/api";
+import { coachMessage } from "../services/api";
 import { profileStore } from "../services/profileStore";
 import { useApp } from "../contexts/AppContext";
 
@@ -101,21 +101,17 @@ export default function OnboardingChat() {
     setLoading(true);
 
     try {
-      const result = await analyze(next);
+      const result = await coachMessage(userText, profileStore.get());
       const reply: Msg = { role: "assistant", content: result.reply ?? "Noted. Tell me a bit more." };
 
       // Persist any stitched profile data
-      if (result.profileFragment) profileStore.merge(result.profileFragment);
+      if (result.profilePatch) profileStore.merge(result.profilePatch);
 
       // Compose: model reply + our purposeful next question
       const followUp = nextSmartQuestion([...next, reply]);
       const augmented = [...next, reply, { role: "assistant", content: followUp } as Msg];
 
       setMessages(augmented);
-
-      if (result.readyForDashboard) {
-        dispatch({ type: "COMPLETE_ONBOARDING" });
-      }
     } catch {
       setMessages((prev) => [
         ...prev,
