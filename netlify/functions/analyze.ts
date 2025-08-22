@@ -1,10 +1,10 @@
 // netlify/functions/analyze.ts
-// Zero-dependency version (no imports), works on Netlify without npm installs.
+// Robust handler: accepts multiple payload shapes, never 500s the UI.
+// If ANTHROPIC_API_KEY is missing or the API fails, returns a safe fallback (200).
 
 const ANTHROPIC_API_KEY =
   process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_APIKEY || "";
 
-// CORS + JSON headers for every response
 const HDRS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type",
@@ -18,55 +18,95 @@ const ok = (data: any, extra: Record<string, string> = {}) => ({
   body: JSON.stringify(data),
 });
 
-const bad = (status: number, msg: string) => ({
+const bad = (status: number, msg: string, extra: Record<string, string> = {}) => ({
   statusCode: status,
-  headers: HDRS,
+  headers: { ...HDRS, ...extra },
   body: JSON.stringify({ error: msg }),
 });
 
 export const handler = async (event: any) => {
-  // Preflight
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: HDRS, body: "" };
   if (event.httpMethod !== "POST") return bad(405, "Method not allowed");
 
-  if (!ANTHROPIC_API_KEY) return bad(500, "Missing ANTHROPIC_API_KEY");
-
   // Parse body
   let body: any = {};
-  try {
-    body = JSON.parse(event.body || "{}");
-  } catch {
-    return bad(400, "Bad JSON");
+  try { body = JSON.parse(event.body || "{}"); } catch { return bad(400, "Bad JSON"); }
+
+  // Helpers
+  const pickString = (obj: any, keys: string[]): string | undefined => {
+    for (const k of keys) {
+      const v = obj?.[k];
+      if (typeof v === "string" && v.trim()) return v.trim();
+    }
+    return undefined;
+  };
+  const toStringArray = (val: any): string[] => {
+    if (Array.isArray(val)) return val.filter((x) => typeof x === "string");
+    if (typeof val === "string") return val.split(/[,|\n]/g).map((s) => s.trim()).filter(Boolean);
+    return [];
+  };
+
+  // Accept legacy shapes used by onboarding chat:
+  // { input: string, user_profile: object, history?: any[] }
+  // Also accept { mode:"coach", message, profile }
+  const looksLikeCoach =
+    body.mode === "coach" ||
+    (typeof body.message === "string" && (body.profile || body.user_profile)) ||
+    (typeof body.input === "string" && (body.user_profile || body.profile));
+
+  // Decision-like text fields for Decision Compass etc.
+  const decisionLike = pickString(body, ["decision","input","prompt","text","query","message","title"]);
+  const options = toStringArray(body.options ?? body.choices ?? body.alternatives ?? body.option ?? null);
+  const userInputs = body.userInputs ?? body.user_profile ?? body.profile ?? body.context ?? body.meta ?? {};
+
+  // ----- COACH MODE -----
+  if (looksLikeCoach) {
+    const msg = pickString(body, ["message","input","text","prompt"]) || "";
+    const profile = body.profile || body.user_profile || {};
+    const sys = `You are NorthForm's onboarding guide.
+Task: Read USER message and update a JSON "profilePatch" capturing: values[], antiValues[], lifeVision, goal90d, goal12m, nonNegs[], constraints[], decisionStyle, biasNotes, and any convo snippets (conv: {fam, frd, wrk}) you infer.
+Rules:
+- Return STRICT JSON with keys: reply (string), profilePatch (object).
+- The "reply" should be warm, concise, and ask one useful follow-up question.
+- Be conservative in updates (only fill what you’re confident about).
+- NEVER include PII the user didn’t provide.`;
+    const user = `CurrentProfile (partial): ${JSON.stringify(profile)}
+UserMessage: ${msg}`;
+
+    try {
+      if (!ANTHROPIC_API_KEY) throw new Error("NO_KEY");
+      const ai = await anthropicJSON(sys, user);
+      const reply = typeof ai.reply === "string" ? ai.reply : "Got it. Tell me more.";
+      const profilePatch = typeof ai.profilePatch === "object" && ai.profilePatch ? ai.profilePatch : {};
+      return ok({ reply, profilePatch }, { "x-nf-branch": "coach/anthropic" });
+    } catch (e: any) {
+      return ok(
+        {
+          reply: "Noted. Could you share one short example of a recent decision and how you chose?",
+          profilePatch: {},
+        },
+        { "x-nf-branch": "coach/fallback", "x-nf-error": String(e).slice(0,160) }
+      );
+    }
   }
 
-  // ---- MODE A: Decision analysis ----
-  // Accept loose shapes. Coerce options -> string[]
-  const decision: string | undefined = body.decision ?? body.input;
-  const optionsRaw: unknown = body.options;
-  const userInputs: Record<string, any> = body.userInputs ?? body.user_profile ?? {};
-
-  const options: string[] = Array.isArray(optionsRaw)
-    ? optionsRaw
-    : typeof optionsRaw === "string"
-    ? [optionsRaw]
-    : [];
-
-  if (typeof decision === "string" && (body.decision || body.input)) {
+  // ----- DECISION MODE -----
+  if (typeof decisionLike === "string" && decisionLike.trim()) {
     const sys = `You are a decision analyst. Return STRICT JSON with keys:
 - confidence (0-100)
 - recommendation (string)
 - reasoning (array of 3-6 concise bullet strings)
 - suggestedNextSteps (array of 3-6 imperative steps)
-Base analysis on the user's inputs if provided. Respond ONLY with JSON.`;
-
-    const user = `Decision: ${decision}
+Respond ONLY with JSON.`;
+    const user = `Decision: ${decisionLike}
 Options: ${JSON.stringify(options)}
 UserInputs: ${JSON.stringify(userInputs)}`;
 
     try {
+      if (!ANTHROPIC_API_KEY) throw new Error("NO_KEY");
       const ai = await anthropicJSON(sys, user);
-      return ok(ai, { "x-nf-ai": "anthropic" });
-    } catch {
+      return ok(ai, { "x-nf-branch": "decision/anthropic" });
+    } catch (e: any) {
       const firstOption = options.length ? options[0] : "the most feasible option";
       return ok(
         {
@@ -83,44 +123,21 @@ UserInputs: ${JSON.stringify(userInputs)}`;
             "Do a 48-hour check-in to reassess",
           ],
         },
-        { "x-nf-ai": "fallback" }
+        { "x-nf-branch": "decision/fallback", "x-nf-error": String(e).slice(0,160) }
       );
     }
   }
 
-  // ---- MODE B: Conversational onboarding (“coach”) ----
-  if (body.mode === "coach" && typeof body.message === "string") {
-    const profile = body.profile || {};
-    const sys = `You are NorthForm's onboarding guide.
-Task: Read USER message and update a JSON "profilePatch" capturing: values[], antiValues[], lifeVision, goal90d, goal12m, nonNegs[], constraints[], decisionStyle, biasNotes, and any convo snippets (conv: {fam, frd, wrk}) you infer.
-Rules:
-- Return STRICT JSON with keys: reply (string), profilePatch (object).
-- The "reply" should be warm, concise, and ask one useful follow-up question.
-- Be conservative in updates (only fill what you’re confident about).
-- NEVER include PII the user didn’t provide.`;
-
-    const user = `CurrentProfile (partial): ${JSON.stringify(profile)}
-UserMessage: ${body.message}`;
-
-    try {
-      const ai = await anthropicJSON(sys, user);
-      const reply = typeof ai.reply === "string" ? ai.reply : "Got it. Tell me more.";
-      const profilePatch =
-        typeof ai.profilePatch === "object" && ai.profilePatch ? ai.profilePatch : {};
-      return ok({ reply, profilePatch }, { "x-nf-ai": "anthropic" });
-    } catch {
-      return ok(
-        {
-          reply: "Noted. Could you share one short example of a recent decision and how you chose?",
-          profilePatch: {},
-        },
-        { "x-nf-ai": "fallback" }
-      );
-    }
-  }
-
-  // Neither mode matched
-  return bad(400, `Unsupported payload. Received keys: ${Object.keys(body).join(", ") || "none"}`);
+  // No match → tell the client exactly what we got
+  const keys = Object.keys(body || {});
+  return bad(
+    400,
+    `Unsupported payload. Keys: ${keys.length ? keys.join(", ") : "none"}.
+Expected either:
+- Coach: { mode:"coach", message, profile } OR { input, user_profile, history? }
+- Decision: { decision|input|prompt|text|query|message, options?: string|string[]|null, userInputs?: object }`,
+    { "x-nf-branch": "no-match", "x-nf-keys": keys.join(",") }
+  );
 };
 
 // ---- helpers ----
@@ -140,17 +157,12 @@ async function anthropicJSON(system: string, user: string) {
       messages: [{ role: "user", content: user }],
     }),
   });
-
   const text = await res.text().catch(() => "");
-  if (!res.ok) throw new Error(`Anthropic ${res.status} ${text.slice(0, 500)}`);
+  if (!res.ok) throw new Error(`Anthropic ${res.status} ${text.slice(0,500)}`);
 
   let llmText = "";
-  try {
-    const j = JSON.parse(text);
-    llmText = j?.content?.[0]?.text ?? "";
-  } catch {
-    llmText = text;
-  }
+  try { const j = JSON.parse(text); llmText = j?.content?.[0]?.text ?? ""; }
+  catch { llmText = text; }
 
   const parsed = safeParseJSON(llmText);
   if (!parsed) throw new Error("Bad JSON from model");
@@ -158,15 +170,8 @@ async function anthropicJSON(system: string, user: string) {
 }
 
 function safeParseJSON(s: string) {
-  try {
-    return JSON.parse(s);
-  } catch {}
-  const start = s.indexOf("{");
-  const end = s.lastIndexOf("}");
-  if (start >= 0 && end > start) {
-    try {
-      return JSON.parse(s.slice(start, end + 1));
-    } catch {}
-  }
+  try { return JSON.parse(s); } catch {}
+  const start = s.indexOf("{"); const end = s.lastIndexOf("}");
+  if (start >= 0 && end > start) { try { return JSON.parse(s.slice(start, end + 1)); } catch {} }
   return null;
 }
