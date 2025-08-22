@@ -1,22 +1,17 @@
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, HelpCircle, Menu, X, Shield, Sparkles, Info } from "lucide-react";
+import { ArrowRight, HelpCircle, Menu, X, Sparkles, Info } from "lucide-react";
 import HeroIntro from "../components/HeroIntro";
 import { useNavigate } from "react-router-dom";
 
 /**
  * LandingPage
- * - HD aurora background with overlay for contrast
- * - Top nav with logo (hidden admin tap access) + actions
- * - Rich hero (uses <HeroIntro />) with onboarding CTA
- * - "How it works" modal + optional "Tour" modal
- * - Keyboard shortcut: press "?" to open How it works
- *
- * Props:
- *  - onEnterApp: () => void            starts onboarding
- *  - onLearnMore?: () => void          custom learn-more handler (optional)
- *  - onAdminOpen?: () => void          open admin panel (optional)
+ * - Aurora background with contrast overlay
+ * - Top nav with hidden admin tap (logo tapped 7x within 5s)
+ * - Rich hero via <HeroIntro />
+ * - Simple "How it works" modal
+ * - Mobile sheet menu
  */
 
 type Props = {
@@ -31,7 +26,7 @@ const ADMIN_TAP_WINDOW_MS = 5000;
 export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Props) {
   const navigate = useNavigate();
 
-  // Modals & UI
+  // UI state
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showTour, setShowTour] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -40,10 +35,11 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
   const [tapCount, setTapCount] = useState(0);
   const firstTapRef = useRef<number | null>(null);
 
-  // Lightweight toast feedback
+  // Tiny toast
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<number | null>(null);
 
+  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       // "?" key opens How it works
@@ -51,7 +47,6 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
         e.preventDefault();
         setShowHowItWorks(true);
       }
-      // ESC to close modals/sheet
       if (e.key === "Escape") {
         setShowHowItWorks(false);
         setShowTour(false);
@@ -62,7 +57,7 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Clear toast after a moment
+  // Auto-clear toast
   useEffect(() => {
     if (!toast) return;
     if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
@@ -72,16 +67,16 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
         window.clearTimeout(toastTimerRef.current);
         toastTimerRef.current = null;
       }
-    }, 2200);
+    }, 2000);
     return () => {
       if (toastTimerRef.current) {
         window.clearTimeout(toastTimerRef.current);
-        toastTimerRefRef = null as any;
+        toastTimerRef.current = null;
       }
     };
   }, [toast]);
 
-  // Admin tap logic
+  // Logo tap logic → admin
   const handleLogoTap = () => {
     const now = Date.now();
     if (firstTapRef.current === null) {
@@ -90,7 +85,6 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
       setToast("👀");
       return;
     }
-    // Reset window if expired
     if (now - firstTapRef.current > ADMIN_TAP_WINDOW_MS) {
       firstTapRef.current = now;
       setTapCount(1);
@@ -100,9 +94,10 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
     setTapCount((c) => {
       const next = c + 1;
       if (next >= ADMIN_TAP_THRESHOLD) {
+        firstTapRef.current = null;
+        setTapCount(0);
         if (onAdminOpen) onAdminOpen();
         else navigate("/admin");
-        firstTapRef.current = null;
         return 0;
       } else {
         setToast(`${next}/${ADMIN_TAP_THRESHOLD}`);
@@ -129,8 +124,8 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
             type="button"
             onClick={handleLogoTap}
             aria-label="NorthForm"
-            className="group inline-flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 hover:bg-white/10 transition"
             title="NorthForm"
+            className="group inline-flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 hover:bg-white/10 transition"
           >
             <Sparkles className="h-5 w-5" />
             <span className="font-semibold tracking-wide">NorthForm</span>
@@ -233,5 +228,86 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
                 }}
                 className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 font-semibold text-black shadow-lg hover:shadow-xl active:scale-[0.99] transition"
               >
-                Start now
-                <
+                <span>Start now</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* How it works Modal */}
+      {showHowItWorks && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setShowHowItWorks(false)}
+          />
+          <div className="relative z-10 max-w-lg rounded-2xl bg-[#0b0f1a] p-6 shadow-2xl border border-white/10">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-xl font-semibold">How it works</h3>
+              <button
+                className="rounded-xl bg-white/10 p-2 hover:bg-white/15 transition"
+                onClick={() => setShowHowItWorks(false)}
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <ol className="list-decimal space-y-2 pl-5 text-white/90">
+              <li>Start with a light onboarding chat—no forms, just conversation.</li>
+              <li>Pause anytime; you can pick up later and I’ll remember context.</li>
+              <li>As you add details, I adapt your plan and guide the next best step.</li>
+            </ol>
+            <div className="mt-5 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowHowItWorks(false);
+                  onEnterApp();
+                }}
+                className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 font-semibold text-black shadow-lg hover:shadow-xl active:scale-[0.99] transition"
+              >
+                Get started
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Simple Tour Modal (optional placeholder) */}
+      {showTour && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setShowTour(false)}
+          />
+          <div className="relative z-10 max-w-lg rounded-2xl bg-[#0b0f1a] p-6 shadow-2xl border border-white/10">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-xl font-semibold">Quick tour</h3>
+              <button
+                className="rounded-xl bg-white/10 p-2 hover:bg-white/15 transition"
+                onClick={() => setShowTour(false)}
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="text-white/90">
+              NorthForm helps you make confident decisions. You’ll see your journey, tools,
+              and suggestions adapt as you share more context.
+            </p>
+            <div className="mt-5 flex justify-end">
+              <button
+                onClick={() => setShowTour(false)}
+                className="rounded-2xl bg-white/10 px-4 py-2 hover:bg-white/15 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
