@@ -2,7 +2,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider, useApp } from "./contexts/AppContext";
-import EnhancedLandingPage from "./pages/EnhancedLandingPage"; // ✅ default import
+import { LandingPage } from "./pages/LandingPage"; // ✅ named export
 import OnboardingChat from "./pages/OnboardingChat";           // ✅ default export
 import Dashboard from "./pages/Dashboard";
 import { DecisionCompassPage } from "./pages/DecisionCompassPage"; // named export
@@ -11,7 +11,7 @@ const AppRoutes: React.FC = () => {
   const { state } = useApp();
   return (
     <Routes>
-      <Route path="/" element={<EnhancedLandingPage />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/onboarding" element={<OnboardingChat />} />
       <Route
         path="/dashboard"
