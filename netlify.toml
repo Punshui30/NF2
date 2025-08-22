@@ -3,14 +3,19 @@
   publish = "dist"
 
 [functions]
+  # <-- This must be a DIRECTORY, not a file
+  directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# API passthrough to Netlify Functions
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
+# React Router SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
