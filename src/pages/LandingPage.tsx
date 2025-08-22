@@ -1,15 +1,7 @@
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  HelpCircle,
-  Menu,
-  X,
-  Shield,
-  Sparkles,
-  Info,
-} from "lucide-react";
+import { ArrowRight, HelpCircle, Menu, X, Shield, Sparkles, Info } from "lucide-react";
 import HeroIntro from "../components/HeroIntro";
 import { useNavigate } from "react-router-dom";
 
@@ -22,9 +14,9 @@ import { useNavigate } from "react-router-dom";
  * - Keyboard shortcut: press "?" to open How it works
  *
  * Props:
- *  - onEnterApp: () => void               (required) starts onboarding
- *  - onLearnMore?: () => void             (optional) custom learn-more handler
- *  - onAdminOpen?: () => void             (optional) open admin panel
+ *  - onEnterApp: () => void            starts onboarding
+ *  - onLearnMore?: () => void          custom learn-more handler (optional)
+ *  - onAdminOpen?: () => void          open admin panel (optional)
  */
 
 type Props = {
@@ -59,7 +51,7 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
         e.preventDefault();
         setShowHowItWorks(true);
       }
-      // ESC to close modals
+      // ESC to close modals/sheet
       if (e.key === "Escape") {
         setShowHowItWorks(false);
         setShowTour(false);
@@ -76,13 +68,15 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
     if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
     toastTimerRef.current = window.setTimeout(() => {
       setToast(null);
-      toastTimerRef.current && window.clearTimeout(toastTimerRef.current);
-      toastTimerRef.current = null;
+      if (toastTimerRef.current) {
+        window.clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = null;
+      }
     }, 2200);
     return () => {
       if (toastTimerRef.current) {
         window.clearTimeout(toastTimerRef.current);
-        toastTimerRef.current = null;
+        toastTimerRefRef = null as any;
       }
     };
   }, [toast]);
@@ -106,13 +100,8 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
     setTapCount((c) => {
       const next = c + 1;
       if (next >= ADMIN_TAP_THRESHOLD) {
-        // Open admin
-        if (onAdminOpen) {
-          onAdminOpen();
-        } else {
-          navigate("/admin"); // fallback route if you have it
-        }
-        // reset
+        if (onAdminOpen) onAdminOpen();
+        else navigate("/admin");
         firstTapRef.current = null;
         return 0;
       } else {
@@ -122,7 +111,6 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
     });
   };
 
-  // Learn more handler
   const openHowItWorks = () => {
     if (onLearnMore) onLearnMore();
     else setShowHowItWorks(true);
@@ -146,7 +134,7 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
           >
             <Sparkles className="h-5 w-5" />
             <span className="font-semibold tracking-wide">NorthForm</span>
-            <span className="sr-only">Tap logo {ADMIN_TAP_THRESHOLD} times for admin</span>
+            <span className="sr-only">Tap logo 7 times for admin</span>
           </button>
 
           {/* Desktop actions */}
@@ -183,11 +171,67 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
             <Menu className="h-5 w-5" />
           </button>
         </nav>
+      </header>
 
-        {/* Mobile sheet */}
-        {mobileOpen && (
-          <div className="fixed inset-0 z-30 md:hidden">
-            <div
-              className="absolute inset-0 bg-black/60"
-              onClick={() => setMobileOpen(false)}
-             
+      {/* Hero */}
+      <main className="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center px-6">
+        <HeroIntro onStart={onEnterApp} onLearnMore={openHowItWorks} />
+      </main>
+
+      {/* Toast */}
+      {toast && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center">
+          <div className="pointer-events-auto rounded-full bg-white/15 px-4 py-2 text-sm shadow-xl backdrop-blur">
+            {toast}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Sheet */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-30 md:hidden">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-[#0b0f1a] p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="font-semibold">Menu</span>
+              <button
+                className="rounded-xl bg-white/10 p-2 hover:bg-white/15 transition"
+                onClick={() => setMobileOpen(false)}
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="grid gap-2">
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  openHowItWorks();
+                }}
+                className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-3 text-left hover:bg-white/10 transition"
+              >
+                <HelpCircle className="h-5 w-5" />
+                How it works
+              </button>
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  setShowTour(true);
+                }}
+                className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-3 text-left hover:bg-white/10 transition"
+              >
+                <Info className="h-5 w-5" />
+                Tour
+              </button>
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  onEnterApp();
+                }}
+                className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 font-semibold text-black shadow-lg hover:shadow-xl active:scale-[0.99] transition"
+              >
+                Start now
+                <
