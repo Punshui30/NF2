@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import LandingPage from "./components/LandingPage";
-import Onboarding from "./components/Onboarding";
-import Dashboard from "./components/Dashboard";
+import LandingPage from "./pages/LandingPage";
+import Onboarding from "./pages/Onboarding";
+import Dashboard from "./pages/Dashboard";
 
 export default function App() {
   const navigate = useNavigate();
@@ -14,10 +14,14 @@ export default function App() {
             <LandingPage
               onEnterApp={() => navigate("/onboarding")}
               onLearnMore={() => navigate("/about")}
+              onAdminOpen={() => navigate("/admin")}
             />
           }
         />
-        <Route path="/onboarding" element={<Onboarding onDone={() => navigate("/dashboard")} />} />
+        <Route
+          path="/onboarding"
+          element={<Onboarding onDone={() => navigate("/dashboard")} />}
+        />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
