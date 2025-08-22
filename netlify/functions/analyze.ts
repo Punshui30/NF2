@@ -1,3 +1,4 @@
+// netlify/functions/analyze.ts
 import type { Handler } from "@netlify/functions";
 
 const ANTHROPIC_API_KEY =
@@ -50,7 +51,7 @@ export const handler: Handler = async (event) => {
     ? [optionsRaw]
     : [];
 
-  if (typeof decision === "string") {
+  if (typeof decision === "string" && (body.decision || body.input)) {
     const sys = `You are a decision analyst. Return STRICT JSON with keys:
 - confidence (0-100)
 - recommendation (string)
@@ -82,7 +83,7 @@ UserInputs: ${JSON.stringify(userInputs)}`;
             "Do a 48-hour check-in to reassess",
           ],
         },
-        { "x-nf-ai": "fallback", "x-nf-error": String(e).slice(0, 160) }
+        { "x-nf-ai": "fallback" }
       );
     }
   }
