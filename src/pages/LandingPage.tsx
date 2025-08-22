@@ -1,180 +1,193 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { AuroraBackground } from '../components/ui/AuroraBackground';
-import { Button } from '../components/ui/Button';
-import { Compass, Brain, MapPin, Users, Activity, Sparkles } from 'lucide-react';
+import * as React from "react";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  HelpCircle,
+  Menu,
+  X,
+  Shield,
+  Sparkles,
+  Info,
+} from "lucide-react";
+import HeroIntro from "../components/HeroIntro";
+import { useNavigate } from "react-router-dom";
 
-export const LandingPage: React.FC = () => {
+/**
+ * LandingPage
+ * - HD aurora background with overlay for contrast
+ * - Top nav with logo (hidden admin tap access) + actions
+ * - Rich hero (uses <HeroIntro />) with onboarding CTA
+ * - "How it works" modal + optional "Tour" modal
+ * - Keyboard shortcut: press "?" to open How it works
+ *
+ * Props:
+ *  - onEnterApp: () => void               (required) starts onboarding
+ *  - onLearnMore?: () => void             (optional) custom learn-more handler
+ *  - onAdminOpen?: () => void             (optional) open admin panel
+ */
+
+type Props = {
+  onEnterApp: () => void;
+  onLearnMore?: () => void;
+  onAdminOpen?: () => void;
+};
+
+const ADMIN_TAP_THRESHOLD = 7;
+const ADMIN_TAP_WINDOW_MS = 5000;
+
+export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Props) {
   const navigate = useNavigate();
 
-  const features = [
-    {
-      icon: Compass,
-      title: "Decision Compass",
-      description: "Navigate life's most important choices with AI-powered clarity"
-    },
-    {
-      icon: Brain,
-      title: "Career Navigator",
-      description: "Discover your ideal career path aligned with your true nature"
-    },
-    {
-      icon: MapPin,
-      title: "Relocation Planner",
-      description: "Find your perfect place in the world based on deep analysis"
-    },
-    {
-      icon: Users,
-      title: "Social Insights",
-      description: "Understand yourself through your digital footprint"
-    },
-    {
-      icon: Activity,
-      title: "Biometric Awareness",
-      description: "Real-time emotional guidance powered by your wearables"
-    },
-    {
-      icon: Sparkles,
-      title: "Neural Pathway Shift",
-      description: "Transform cognitive patterns for lasting change"
+  // Modals & UI
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [showTour, setShowTour] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Hidden admin access via logo taps
+  const [tapCount, setTapCount] = useState(0);
+  const firstTapRef = useRef<number | null>(null);
+
+  // Lightweight toast feedback
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // "?" key opens How it works
+      if (e.key === "?" || (e.shiftKey && e.key === "/")) {
+        e.preventDefault();
+        setShowHowItWorks(true);
+      }
+      // ESC to close modals
+      if (e.key === "Escape") {
+        setShowHowItWorks(false);
+        setShowTour(false);
+        setMobileOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Clear toast after a moment
+  useEffect(() => {
+    if (!toast) return;
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current && window.clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }, 2200);
+    return () => {
+      if (toastTimerRef.current) {
+        window.clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = null;
+      }
+    };
+  }, [toast]);
+
+  // Admin tap logic
+  const handleLogoTap = () => {
+    const now = Date.now();
+    if (firstTapRef.current === null) {
+      firstTapRef.current = now;
+      setTapCount(1);
+      setToast("👀");
+      return;
     }
-  ];
+    // Reset window if expired
+    if (now - firstTapRef.current > ADMIN_TAP_WINDOW_MS) {
+      firstTapRef.current = now;
+      setTapCount(1);
+      setToast("👀");
+      return;
+    }
+    setTapCount((c) => {
+      const next = c + 1;
+      if (next >= ADMIN_TAP_THRESHOLD) {
+        // Open admin
+        if (onAdminOpen) {
+          onAdminOpen();
+        } else {
+          navigate("/admin"); // fallback route if you have it
+        }
+        // reset
+        firstTapRef.current = null;
+        return 0;
+      } else {
+        setToast(`${next}/${ADMIN_TAP_THRESHOLD}`);
+        return next;
+      }
+    });
+  };
+
+  // Learn more handler
+  const openHowItWorks = () => {
+    if (onLearnMore) onLearnMore();
+    else setShowHowItWorks(true);
+  };
 
   return (
-    <AuroraBackground className="min-h-screen" intensity="high">
-      <div className="relative z-10">
-        {/* Header */}
-        <motion.header
-          className="absolute top-0 left-0 right-0 z-20 p-6"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center">
-                <Compass className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold text-white">NorthForm</span>
-            </div>
-            
-            <nav className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-white/80 hover:text-white transition-colors">Features</a>
-              <a href="#about" className="text-white/80 hover:text-white transition-colors">About</a>
-              <Button variant="ghost" onClick={() => navigate('/login')}>
-                Sign In
-              </Button>
-            </nav>
-          </div>
-        </motion.header>
+    <div className="aurora-bg relative min-h-screen text-white">
+      {/* contrast overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-black/25 to-black/60" />
 
-        {/* Hero Section */}
-        <section className="min-h-screen flex items-center justify-center px-6">
-          <div className="max-w-6xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.2 }}
+      {/* Top Nav */}
+      <header className="relative z-20">
+        <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-6">
+          {/* Logo (hidden admin tap) */}
+          <button
+            type="button"
+            onClick={handleLogoTap}
+            aria-label="NorthForm"
+            className="group inline-flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 hover:bg-white/10 transition"
+            title="NorthForm"
+          >
+            <Sparkles className="h-5 w-5" />
+            <span className="font-semibold tracking-wide">NorthForm</span>
+            <span className="sr-only">Tap logo {ADMIN_TAP_THRESHOLD} times for admin</span>
+          </button>
+
+          {/* Desktop actions */}
+          <div className="hidden items-center gap-2 md:flex">
+            <button
+              onClick={openHowItWorks}
+              className="inline-flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-sm hover:bg-white/10 transition"
             >
-              <h1 className="text-6xl md:text-8xl font-bold text-white mb-6 leading-tight">
-                Navigate Your
-                <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-                  {" "}True North
-                </span>
-              </h1>
-              
-              <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed">
-                Revolutionary AI-powered life alignment platform that guides you through major decisions, 
-                career transitions, and personal transformation with the precision of Aurora Borealis.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                <Button 
-                  size="lg" 
-                  onClick={() => navigate('/onboarding')}
-                  className="w-full sm:w-auto"
-                >
-                  Begin Your Journey
-                </Button>
-                <Button 
-                  variant="secondary" 
-                  size="lg"
-                  className="w-full sm:w-auto"
-                >
-                  Watch Demo
-                </Button>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="features" className="py-24 px-6">
-          <div className="max-w-7xl mx-auto">
-            <motion.div
-              className="text-center mb-16"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
+              <HelpCircle className="h-4 w-4" />
+              How it works
+            </button>
+            <button
+              onClick={() => setShowTour(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 text-sm hover:bg-white/10 transition"
             >
-              <h2 className="text-5xl font-bold text-white mb-6">
-                Intelligent Life Navigation
-              </h2>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-                Combining neuroscience, psychology, and AI to deliver insights that transform how you make decisions and live your life.
-              </p>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature, index) => (
-                <motion.div
-                  key={feature.title}
-                  className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all duration-300"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ scale: 1.05 }}
-                >
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 flex items-center justify-center mb-6">
-                    <feature.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-4">{feature.title}</h3>
-                  <p className="text-gray-300 leading-relaxed">{feature.description}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-24 px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
+              <Info className="h-4 w-4" />
+              Tour
+            </button>
+            <button
+              onClick={onEnterApp}
+              className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-black shadow-lg hover:shadow-xl active:scale-[0.99] transition"
             >
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                Ready to Find Your True North?
-              </h2>
-              <p className="text-xl text-gray-300 mb-12">
-                Join the revolution in intelligent life navigation. Transform your decision-making with AI-powered insights.
-              </p>
-              <Button 
-                size="lg" 
-                onClick={() => navigate('/onboarding')}
-                className="text-xl px-12 py-4"
-              >
-                Start Your Transformation
-              </Button>
-            </motion.div>
+              Start now
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
-        </section>
-      </div>
-    </AuroraBackground>
-  );
-};
+
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden rounded-xl bg-white/5 p-2 hover:bg-white/10 transition"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </nav>
+
+        {/* Mobile sheet */}
+        {mobileOpen && (
+          <div className="fixed inset-0 z-30 md:hidden">
+            <div
+              className="absolute inset-0 bg-black/60"
+              onClick={() => setMobileOpen(false)}
+             
