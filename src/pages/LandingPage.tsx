@@ -170,7 +170,10 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
 
       {/* Hero */}
       <main className="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center px-6">
-        <HeroIntro onStart={onEnterApp} onLearnMore={openHowItWorks} />
+        {/* <HeroIntro onStart={onEnterApp} onLearnMore={openHowItWorks} /> */}
+        <div className="text-white text-2xl border-2 border-yellow-500 p-4">
+          HeroIntro is commented out. If you see this, HeroIntro was the crasher.
+        </div>
       </main>
 
       {/* Toast */}
