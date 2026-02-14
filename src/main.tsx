@@ -6,12 +6,16 @@ import "./index.css";
 
 const root = document.getElementById("root");
 
+import { AppProvider } from "./contexts/AppContext";
+
 if (root) {
   ReactDOM.createRoot(root).render(
     <React.StrictMode>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <AppProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </AppProvider>
     </React.StrictMode>
   );
 } else {
