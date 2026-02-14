@@ -26,90 +26,19 @@ const ADMIN_TAP_WINDOW_MS = 5000;
 export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Props) {
   const navigate = useNavigate();
 
-  // UI state
+  /* 
+  Debug Mode: Simplified Render 
+  */
+  return (
+    <div className="min-h-screen border-4 border-blue-500 flex items-center justify-center">
+      <h1 className="text-4xl text-white">Landing Page Loaded Successfully</h1>
+    </div>
+  );
+
+  /* Original Logic (Temporarily commented out)
   const [showHowItWorks, setShowHowItWorks] = useState(false);
-  const [showTour, setShowTour] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  // Hidden admin access via logo taps
-  const [tapCount, setTapCount] = useState(0);
-  const firstTapRef = useRef<number | null>(null);
-
-  // Tiny toast
-  const [toast, setToast] = useState<string | null>(null);
-  const toastTimerRef = useRef<number | null>(null);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      // "?" key opens How it works
-      if (e.key === "?" || (e.shiftKey && e.key === "/")) {
-        e.preventDefault();
-        setShowHowItWorks(true);
-      }
-      if (e.key === "Escape") {
-        setShowHowItWorks(false);
-        setShowTour(false);
-        setMobileOpen(false);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  // Auto-clear toast
-  useEffect(() => {
-    if (!toast) return;
-    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => {
-      setToast(null);
-      if (toastTimerRef.current) {
-        window.clearTimeout(toastTimerRef.current);
-        toastTimerRef.current = null;
-      }
-    }, 2000);
-    return () => {
-      if (toastTimerRef.current) {
-        window.clearTimeout(toastTimerRef.current);
-        toastTimerRef.current = null;
-      }
-    };
-  }, [toast]);
-
-  // Logo tap logic → admin
-  const handleLogoTap = () => {
-    const now = Date.now();
-    if (firstTapRef.current === null) {
-      firstTapRef.current = now;
-      setTapCount(1);
-      setToast("👀");
-      return;
-    }
-    if (now - firstTapRef.current > ADMIN_TAP_WINDOW_MS) {
-      firstTapRef.current = now;
-      setTapCount(1);
-      setToast("👀");
-      return;
-    }
-    setTapCount((c) => {
-      const next = c + 1;
-      if (next >= ADMIN_TAP_THRESHOLD) {
-        firstTapRef.current = null;
-        setTapCount(0);
-        if (onAdminOpen) onAdminOpen();
-        else navigate("/admin");
-        return 0;
-      } else {
-        setToast(`${next}/${ADMIN_TAP_THRESHOLD}`);
-        return next;
-      }
-    });
-  };
-
-  const openHowItWorks = () => {
-    if (onLearnMore) onLearnMore();
-    else setShowHowItWorks(true);
-  };
+  ...
+  */
 
   return (
     <div className="aurora-bg relative min-h-screen text-white border-4 border-blue-500">
