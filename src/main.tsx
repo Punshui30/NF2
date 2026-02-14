@@ -4,6 +4,8 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import "./index.css";
 
+console.log("NorthForm initializing...");
+
 const root = document.getElementById("root");
 
 import { AppProvider } from "./contexts/AppContext";
