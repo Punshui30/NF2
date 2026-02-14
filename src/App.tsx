@@ -32,7 +32,7 @@ export default function App() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen w-full text-white">
+    <div className="min-h-screen w-full text-white border-4 border-red-500">
       <Routes>
         {/* Landing → default CTA navigates to /onboarding (smart) */}
         <Route

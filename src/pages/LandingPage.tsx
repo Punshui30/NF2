@@ -112,7 +112,7 @@ export default function LandingPage({ onEnterApp, onLearnMore, onAdminOpen }: Pr
   };
 
   return (
-    <div className="aurora-bg relative min-h-screen text-white">
+    <div className="aurora-bg relative min-h-screen text-white border-4 border-blue-500">
       {/* contrast overlay */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-black/25 to-black/60" />
 
